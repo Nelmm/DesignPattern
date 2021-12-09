@@ -85,6 +85,19 @@ public class App {
         System.out.println(System.identityHashCode(testDeepCopy1.getAnInt()));
     }
 }
+true
+true
+true
+853119666
+853119666
+559670971
+559670971
+true
+false
+1576861390
+1576861390
+1576861390
+1576861390
 ```
 
 Cloneable의 Default  구현체를 통해 Clone을 구현하면 얕은 복사가 이루어진다.
