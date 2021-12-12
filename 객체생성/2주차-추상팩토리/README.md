@@ -74,3 +74,13 @@
      - 지역 레퍼런스를 두어 , 외부로부터 Factory 객체를 DI 받아서 위임.
 
 [factory method pattern vs abstract factory pattern 차이 알아보기](https://beomseok95.tistory.com/246)
+
+
+
+### 어디서 찾아볼것인가?
+
+- java.xml 파일
+  - DocumentBuilderFactory
+- Spring FactoryBean
+  - 인터페이스인데, 이걸 구현 받아서→ 등록만 해놓으면 Bean으로 이 객체가 쭉쭉 나오는 방식.
+  - Factory등록해놓으면 Ship.class를 통해서 빈을가져오면 알아서 Factory에서 빼서 가져오는 방식
