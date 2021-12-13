@@ -129,7 +129,7 @@ public abstract class PersonBuilder{
 }
 
 //Builder 
-public class StandardPersonBuilder{
+public class StandardPersonBuilder extends PersonBuilder{
     public void buildLastName(){
         person.setLastName("홍");
     }
@@ -138,20 +138,20 @@ public class StandardPersonBuilder{
     }
 }
 
-public class CustomPersonBuilder{
+public class CustomPersonBuilder extends PersonBuilder{
     public void buildLastName(){
         person.setLastName("김");
     }
-    public void buildFirstName(){
+    public void buildFirstName() {
         person.setFirstName("이박");
     }
 }
 
 //Director
 public class Director {
-    private Builder builder;
+    private PersonBuilder builder;
 
-    public Director(Builder builder){
+    public Director(PersonBuilder builder){
         this.builder = builder;
     }
 
@@ -166,7 +166,7 @@ public class Director {
     }
 }
 public static void main(String[] args) {
-    Builder personBuilder = new PersonBuilder();
+    PersonBuilder personBuilder = new StandardPersonBuilder();
     Director director = new Director(personBuilder);
     director.build();
 
@@ -190,6 +190,11 @@ class Person{
 
     public static Person.PersonBuilder builder() {
         return new Person.PersonBuilder();
+    }
+
+    Person(String firstname, String lastName){
+        this.firstName = firstname;
+        this.lastName = lastName;
     }
 
     public static class PersonBuilder{
@@ -306,7 +311,15 @@ class Person{
 }
 ```
 
-다만 build()를 정의하면서 AllargumentsConstructor를 필요로 하기 때문에 원본클래스의 해당 생성자는 필수로 있어야 컴파일에러가 발생하지 않는다.
+#### 빌더 어노테이션을 사용할때 주의할 점
+
+@Builder도 private으로 만들긴 하지만 @AllArgsConstructor를 내포하며, private으로 생성을 하기 때문에 외부에서 AllArgsConstructor를 참조할 수 없습니다.
+
+
+#### 권장하는 방법
+
+- @Builder를 Class보다는 직접 만든 생성자 혹은 static 객체 생성 메소드에 붙이는 것을 권장합니다.
+- @Builder 를 Class에 적용시키면 생성자의 접근 레벨이 default이기 때문에, 동일 패키지 내에서 해당 생성자를 호출할 수 있는 문제가 있기 때문입니다.
 
 <br><br>
 
