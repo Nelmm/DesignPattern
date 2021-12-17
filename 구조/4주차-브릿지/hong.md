@@ -166,11 +166,11 @@ public class Client {
     public static void main(String[] args) {
         double x = 20.1234;
         double y = 1.35452;
-        MyPage page1 = new MyPage(x,y,new MyNaverMapApi());
+        MyMapPage page1 = new MyMapPage(x,y,new MyNaverMapApi());
         page1.drawPage();   //나의 페이지에 지도 그리기
                             //네이버는 20.1234와 1.35452로 지도를 그립니다.
 
-        MyPage page2 = new MyPage(x,y,new MyKakaoMapApi());
+        MyMapPage page2 = new MyMapPage(x,y,new MyKakaoMapApi());
         page2.drawPage();   //나의 페이지에 지도 그리기
                             //카카오는 20.1234와 1.35452로 지도를 그립니다.
     }
