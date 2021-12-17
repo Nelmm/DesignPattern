@@ -2,7 +2,7 @@
 
 추상적인 것과 구체적인 것을 분리하여 연결하는 패턴
 
-하나의 계층 구조일때보다 각기 나누었을때 독립적인 게층 구조로 발전 시킬 수 있다.
+하나의 계층 구조일때보다 각각 나누었을때 독립적인 게층 구조로 발전 시킬 수 있다.
 
 GUI ↔ API 연결하는 모습에서 대부분 이런 형태 
 
@@ -38,7 +38,7 @@ SQL을 작성하고 statement를 설정하고, 실행시키는 코드는 크게 
 
  
 
-![Untitled](/image/slf4j.png)
+![Untitled](/구조/4주차-브릿지/image/slf4j.png)
 
  
 
@@ -56,23 +56,23 @@ SQL을 작성하고 statement를 설정하고, 실행시키는 코드는 크게 
 
 List<> interface , Map<> Interface도 브릿지 패턴의 일종 같아보인다.
 
-![Untitled](/image/java-1.png)
+![Untitled](/구조/4주차-브릿지/image/java-1.png)
 
-![Untitled](/image/java-2.png)
+![Untitled](/구조/4주차-브릿지/image/java-2.png)
 
 List<> list = new ArrayList<>(); 라던가, LinkedList<>(); 로 갈아끼우고, 내부의 메소드는 동일하게 사용하는 방식이니까 어떤 식으로 보면,
 
 또한 LinkedList의 경우는 Queue Interface에서도 사용 가능하기도 하다.
 
-![Untitled](/image/java-3.png)
+![Untitled](/구조/4주차-브릿지/image/java-3.png)
 
-![Untitled](/image/java-4.png)
+![Untitled](/구조/4주차-브릿지/image/java-4.png)
 
 Set 역시 비슷한데, AbstractSet class를 상속하고, Set을 인터페이스로 구현하는 방식으로 되어있다.
 
-![Untitled](/image/java-5.png)
+![Untitled](/구조/4주차-브릿지/image/java-5.png)
 
-![Untitled](/image/java-6.png)
+![Untitled](/구조/4주차-브릿지/image/java-6.png)
 
 Map도 비슷하게 HashMap, TreeMap을 통해서 내부 인터페이스의 주요 메소드를 사용할 수 있도록 구현한 것 자체가 이것도 일종의 브릿지 패턴중 하나 아닐까...
 
@@ -81,15 +81,15 @@ Map도 비슷하게 HashMap, TreeMap을 통해서 내부 인터페이스의 주�
 
 </aside>
 
-![Untitled](/image/java-7.png)
+![Untitled](/구조/4주차-브릿지/image/java-7.png)
 
 **Spring Batch** 
 
 Spring Batch에서 사용하는 Reader 기능중 StreamReader는 thread-safe를 위한 interface이고, 결국 멀티 쓰레드를  사용하는 Reader를 이용하기 위해서는, 
 
-![Untitled](/image/java-8.png)
+![Untitled](/구조/4주차-브릿지/image/java-8.png)
 
-![Untitled](/image/java-9.png)
+![Untitled](/구조/4주차-브릿지/image/java-9.png)
 
 ```java
 public interface ItemStream {
