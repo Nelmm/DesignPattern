@@ -1,5 +1,5 @@
 # 데코레이터
-![decorator](/common/image/decorator.PNG)
+![decorator](/구조/5주차-데코레이터/image/decorator.PNG)
 사진 출처 : https://refactoring.guru/design-patterns/decorator
 
 기존 코드를 변경하지 않고 추가 기능을 추가하는 패턴으로 `런타임`에도 기능을 추가하는 것이 가능하다. 기능 확장이 필요할 때 상속대신 사용할 수 있는 패턴.
