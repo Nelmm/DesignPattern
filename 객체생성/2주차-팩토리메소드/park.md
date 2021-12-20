@@ -13,10 +13,10 @@
 팩토리 패턴에는 **팩토리 메소드 패턴**과 **추상 팩토리 패턴**이 있다.
 
 
-| Pattern                | 차이점                                                       |
-| ---------------------- | ------------------------------------------------------------ |
+| Pattern | 차이점 |
+| --- | --- |
 | **팩토리 메소드 패턴** | 상속을 통해 **서브 클래스에서 팩토리 메소드를 오버라이딩**하여 객체의 생성부를 구현 |
-| **추상 팩토리 패턴**   | **객체의 집합을 생성하기** 위한 정의를 추상체에 위치시키고 **하위의 구현체에서 세부적인 집합 생성 과정을 구현**   (Fatory Method를 이용해 구현) |
+| **추상 팩토리 패턴** | **객체의 집합을 생성하기** 위한 정의를 추상체에 위치시키고 **하위의 구현체에서 세부적인 집합 생성 과정을 구현**   (Fatory Method를 이용해 구현) |
 
 **공통점 :** 객체의 생성부를 캡슐화하여 **결합을 느슨**하게 함   구체적인 **타입에 의존하지 않도록** 함
 
@@ -41,21 +41,17 @@
 #### 1-3-1. 장점
 
 - 기존 코드(인스턴스를 만드는 과정)를 **수정하지 않고** 새로운 인스턴스를 다른 방법으로 **생성하도록 확장**할 수 있다.
-  - Product 와 Creator 간의 커플링(결합)이 느슨함
-  - 확장에 열려있고 변경에 닫혀있는 객체지향 원칙을 적용했기 때문에 가능
-    -   확장 : 새로운 인스턴스 추가
-    -   변경 : 기존 코드를 수정
+    - Product 와 Creator 간의 커플링(결합)이 느슨함
+    - 확장에 열려있고 변경에 닫혀있는 객체지향 원칙을 적용했기 때문에 가능
+        -   확장 : 새로운 인스턴스 추가
+        -   변경 : 기존 코드를 수정
 - **코드가 간결**해진다.
 - 병렬적 클래스 계층도를 연결하는 역할을 담당할 수 있음
 
 > **✍🏻 팩토리 메소드 패턴을 적용할 때 참고**
->
 > 1. 자바 8의 인터페이스 default 메소드
->
 >  - 인터페이스에 추상 메소드가 아닌 default 메소드를 통해 기능을 구현할 수 있게 되어서 상속받는 서브클래스의 중복코드를 제거할 수 있다.
->
 > 2. 자바 9의 인터페이스의 private 메소드
->
 >  - 기능 구현이 가능해지면서 인터페이스의 내부 로직을 private 메소드로 구현하면 읽기 좋은 코드로 작성할 수 있게 된다.
 
 ![image](https://user-images.githubusercontent.com/42997924/144359203-0bf521bd-fdda-4eef-b210-f6e1cffe96b6.png)
@@ -63,104 +59,8 @@
 #### 1-3-2. 단점
 
 - **클래스가 많아진다. (클래스 계층도 커질 수 있다.)**
-  - 제품 클래스가 바뀔 때마다 새로운 서브클래스를 생성해야 한다.
+    - 제품 클래스가 바뀔 때마다 새로운 서브클래스를 생성해야 한다.
 - 클라이언트가 creator 클래스를 반드시 상속해 Product를 생성해야 한다.
-
-
-
-## 팩토리 메소드 패턴 예제
-
-```java
-public class Client {
-
-    public static void main(String[] args) {
-        Client client = new Client();
-        client.print(new APizzaFactory());
-        client.print(new BPizzaFactory());
-    }
-
-    private void print(PizzaFactory pizzaFactory) {
-        pizzaFactory.requestOrder();
-    }
-
-}
-
-public interface PizzaFactory {
-    default void requestOrder() {
-        prepare();
-        Pizza pizza = createPizza();
-        pizza.makePizza();
-        delivery(pizza.getPizza());
-        complete();
-    }
-    default void prepare(){
-        System.out.println("피자 만들 준비중 ");
-    }
-    default void delivery(String pizza) {
-        System.out.println(pizza + " 배달중");
-    }
-    default void complete() {
-        System.out.println("피자 배달 완료");
-    }
-
-    Pizza createPizza();    //서로 다른 클래스
-}
-
-public class APizzaFactory implements PizzaFactory {
-    @Override
-    public Pizza createPizza() {
-        return new APizza();
-    }
-}
-
-public class BPizzaFactory implements PizzaFactory{
-    @Override
-    public Pizza createPizza() {
-        return new BPizza();
-    }
-}
-
-public interface Pizza {
-    void makePizza();
-    String getPizza();
-}
-
-@Getter
-public class APizza implements Pizza{
-    private String name;
-    @Override
-    public void makePizza() {
-        System.out.println("A피자 만드는중");
-        name = "A피자";
-    }
-
-    @Override
-    public String getPizza() {
-        return name;
-    }
-}
-
-@Getter
-public class BPizza implements Pizza{
-    private String name;
-    @Override
-    public void makePizza() {
-        System.out.println("B피자 만드는중");
-        name = "B피자";
-    }
-
-    @Override
-    public String getPizza() {
-        return name;
-    }
-}
-```
-
-> 다이어그램
-
-![Untitled](https://user-images.githubusercontent.com/32676275/144534950-ef61780b-dceb-4ad1-b0e7-8b8a9e2b1eb0.png)
-
-
 
 ### 1-4. 실제 적용 예시
 
