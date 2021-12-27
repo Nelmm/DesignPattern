@@ -4,7 +4,7 @@
 
 퍼사드: 전경을 바라보는 것! *lossing coupling → 의존성을 약하게 하기...*
 
-![Untitled](img/Untitled.png)
+![Untitled](/구조/6주차-퍼사드/img/Untitled.png)
 
 클라이언트가 사용해야하는 복잡합 서브 시스템 의존성을 간단한 인터페이스로 추상화 할 수 있다.
 
