@@ -1,3 +1,5 @@
+Real Object에 대해서 실제로 필요할 때 instance가 생성되고 실제 작업이 진행될 수 있도록 하기 위해 적용되는 패턴
+
 ## Proxy 예
 ```java
 public class Fruit {
@@ -706,42 +708,82 @@ public class DynamicProxyFilterConfig {
 }
 ```
 
-### postProcessor
+### 4. ProxyFactory
+AOP를 이용한 방법
 ```java
+@RequiredArgsConstructor
+public class LogTraceAdvice implements MethodInterceptor {
+    private final LogTrace logTrace;
+
+    @Override
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+        LogTrace.TraceStatus status = null;
+        try {
+            Method method = invocation.getMethod();
+            String message = method.getDeclaringClass().getSimpleName() + "." +
+                    method.getName() + "()";
+            status = logTrace.begin(message);
+
+            //로직 호출
+            Object result = invocation.proceed();
+
+            logTrace.end(status);
+            return result;
+        } catch (Exception e) {
+            logTrace.exception(status, e);
+            throw e;
+        }
+    }
+}
+
 @Slf4j
 @Configuration
-public class BeanPostProcessorConfig {
-
+public class ProxyFactoryConfig {
     @Bean
-    public FruitController fruitController() {
-        return new FruitControllerImpl(fruitService());
+    public FruitController orderController(LogTrace logTrace) {
+        FruitController orderController = new FruitControllerImpl(orderService(logTrace));
+        ProxyFactory factory = new ProxyFactory(orderController);
+        factory.addAdvisor(getAdvisor(logTrace));
+        FruitController proxy = (FruitController) factory.getProxy();
+        log.info("ProxyFactory proxy={}, target={}", proxy.getClass(), orderController.getClass());
+        return proxy;
     }
 
     @Bean
-    public FruitService fruitService() {
-        return new FruitServiceImpl(fruitRepository());
+    public FruitService orderService(LogTrace logTrace) {
+        FruitService orderService = new FruitServiceImpl(orderRepository(logTrace));
+        ProxyFactory factory = new ProxyFactory(orderService);
+        factory.addAdvisor(getAdvisor(logTrace));
+        FruitService proxy = (FruitService) factory.getProxy();
+        log.info("ProxyFactory proxy={}, target={}", proxy.getClass(), orderService.getClass());
+        return proxy;
     }
 
     @Bean
-    public FruitRepository fruitRepository() {return new FruitRepositoryImpl();}
-
-    @Bean
-    public PackageLogTracePostProcessor logTracePostProcessor(LogTrace logTrace) {
-        return new PackageLogTracePostProcessor("com.example.springex", getAdvisor(logTrace));
+    public FruitRepository orderRepository(LogTrace logTrace) {
+        FruitRepository orderRepository = new FruitRepositoryImpl();
+        ProxyFactory factory = new ProxyFactory(orderRepository);
+        factory.addAdvisor(getAdvisor(logTrace));
+        FruitRepository proxy = (FruitRepository) factory.getProxy();
+        log.info("ProxyFactory proxy={}, target={}", proxy.getClass(), orderRepository.getClass());
+        return proxy;
     }
 
     private Advisor getAdvisor(LogTrace logTrace) {
         //pointcut
         NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
         pointcut.setMappedNames("getFruit*");
-
         //advice
         LogTraceAdvice advice = new LogTraceAdvice(logTrace);
         return new DefaultPointcutAdvisor(pointcut, advice);
     }
 }
+```
 
+### 5. postProcessor
+```java
 @Slf4j
+@RequiredArgsConstructor
 public class PackageLogTracePostProcessor implements BeanPostProcessor {
 
     private final String basePackage;
@@ -772,4 +814,182 @@ public class PackageLogTracePostProcessor implements BeanPostProcessor {
         return proxy;
     }
 }
+
+@Slf4j
+@Configuration
+public class BeanPostProcessorConfig {
+    @Bean
+    public PackageLogTracePostProcessor logTracePostProcessor(LogTrace logTrace) {
+        return new PackageLogTracePostProcessor("com.example.springex", getAdvisor(logTrace));
+    }
+
+    private Advisor getAdvisor(LogTrace logTrace) {
+        //pointcut
+        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+        pointcut.setMappedNames("getFruit*");
+
+        //advice
+        LogTraceAdvice advice = new LogTraceAdvice(logTrace);
+        return new DefaultPointcutAdvisor(pointcut, advice);
+    }
+}
 ```
+
+### 6. AutoProxy
+// implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+```java
+@Configuration
+public class AutoProxyConfig {
+//    @Bean
+    public Advisor advisor1(LogTrace logTrace) {
+        //pointcut
+        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+        pointcut.setMappedNames("getFruit*");
+        //advice
+        LogTraceAdvice advice = new LogTraceAdvice(logTrace);
+        return new DefaultPointcutAdvisor(pointcut, advice);
+    }
+
+//    @Bean
+    public Advisor advisor2(LogTrace logTrace) {
+        //pointcut
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+        pointcut.setExpression("execution(* com.example.springex.proxy._6_autoProxy..*(..))");
+        //advice
+        LogTraceAdvice advice = new LogTraceAdvice(logTrace);
+        return new DefaultPointcutAdvisor(pointcut, advice);
+    }
+
+    @Bean
+    public Advisor advisor3(LogTrace logTrace) {
+        //pointcut
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+        pointcut.setExpression("execution(* com.example.springex.proxy._6_autoProxy..*(..)) && !execution(* com.example.springex.proxy._6_autoProxy.FruitController.getFruit(..))");
+
+        //advice
+        LogTraceAdvice advice = new LogTraceAdvice(logTrace);
+        return new DefaultPointcutAdvisor(pointcut, advice);
+    }
+}
+```
+
+### 7. AOP (pointcut expression)
+```java
+@Slf4j
+@Aspect
+public class LogTraceAspect {
+    private final LogTrace logTrace;
+
+    public LogTraceAspect(LogTrace logTrace) {
+        this.logTrace = logTrace;
+    }
+
+    @Around("execution(* com.example.springex.proxy._7_aop.app..*(..)) && !execution(* com.example.springex.proxy._7_aop.app.FruitController.getFruit(..))")
+    public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
+        LogTrace.TraceStatus status = null;
+        try {
+            String message = joinPoint.getSignature().toShortString();
+            status = logTrace.begin(message);
+
+            //로직 호출
+            Object result = joinPoint.proceed();
+
+            logTrace.end(status);
+            return result;
+        } catch (Exception e) {
+            logTrace.exception(status, e);
+            throw e;
+        }
+    }
+}
+```
+
+### 8. AOP (annotation)
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD,ElementType.TYPE})
+public @interface Log {
+}
+
+@Controller
+@RequiredArgsConstructor
+public class FruitController {
+    private final FruitService fruitService;
+
+    @GetMapping("/v1/fruit")
+    public ResponseEntity<Fruit> getFruit(@RequestParam String name){
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+
+    @Log
+    @GetMapping("/v2/fruit")
+    public ResponseEntity<Fruit> getFruitLogging(@RequestParam String name){
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+}
+
+@Log
+@Service
+@RequiredArgsConstructor
+public class FruitService {
+    private final FruitRepository fruitRepository;
+
+    public Fruit getFruit(String name) {
+        return fruitRepository.getFruitByName(name);
+    }
+}
+
+@Log
+@Repository
+@RequiredArgsConstructor
+public class FruitRepository {
+    private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
+            "orange",new Fruit("orange",10000),
+            "strawberry", new Fruit("strawberry", 20000),
+            "mango", new Fruit("mango",30000)
+    ));
+
+    public Fruit getFruitByName(String name) {
+        return fruitList.getOrDefault(name,null);
+    }
+}
+@Slf4j
+@Aspect
+public class LogTraceAspect {
+    private final LogTrace logTrace;
+
+    public LogTraceAspect(LogTrace logTrace) {
+        this.logTrace = logTrace;
+    }
+
+    @Around("@annotation(Log) || @within(Log)")
+    public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
+        LogTrace.TraceStatus status = null;
+        try {
+            String message = joinPoint.getSignature().toShortString();
+            status = logTrace.begin(message);
+
+            //로직 호출
+            Object result = joinPoint.proceed();
+
+            logTrace.end(status);
+            return result;
+        } catch (Exception e) {
+            logTrace.exception(status, e);
+            throw e;
+        }
+    }
+}
+@Configuration
+public class AopConfig {
+    @Bean
+    public LogTraceAspect logTraceAspect(LogTrace logTrace) {
+        return new LogTraceAspect(logTrace);
+    }
+}
+
+```
+
+## 차이점
+- Decorator : `런타임`에 `기능을 추가`하는 것이 목적, Proxy는 `컴파일 타임`에 `행동을 제어` 하는 것이 목적
