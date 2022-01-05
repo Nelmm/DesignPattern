@@ -1,6 +1,171 @@
-Real Object에 대해서 실제로 필요할 때 instance가 생성되고 실제 작업이 진행될 수 있도록 하기 위해 적용되는 패턴
+# 프록시
 
-## Proxy 예
+어떤 객체에 대한 대리자를 통해 접근을 제어하여 객체의 생성을 지연초기화 하거나, 캐싱, 객체의 행동 전후에 행동제어를 수행할 수 있는 패턴
+
+<br>
+
+## 코드
+```java
+public class FruitRepository{
+    private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
+            "orange",new Fruit("orange",10000),
+            "strawberry", new Fruit("strawberry", 20000),
+            "mango", new Fruit("mango",30000)
+    ));
+
+
+    public Fruit getFruitByName(String name) {
+        System.out.println("Repository에서 " + name +" 조회");
+        return fruitList.getOrDefault(name,null);
+    }
+}
+
+@Controller
+@RequestMapping("/ex")
+@RequiredArgsConstructor
+public class FruitController {
+    private final FruitRepository fruitRepository;
+
+    @GetMapping("/fruit")
+    public ResponseEntity<Fruit> getFruit(@RequestParam String name) {
+        return ResponseEntity.ok(fruitRepository.getFruitByName(name));
+    }
+}
+```
+아주 단순하게 구현하기 위해 map을 통한 데이터 접근을 구현하며 이를 db를 대체한다고 하자. 이런 객체를 controller에서 이용하여 데이터를 조회하는 프로그램이 있다고하자. 그런데 조회할때 같은 과일이름의 조회결과는 캐싱을 추가하려고 한다. 그러면 아래와 같이 코드를 작성할 수 있을 것이다.
+```java
+@Repository
+public class FruitRepository {
+    private static final Map<String, Fruit> cachedFruitName = new HashMap<>();
+    private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
+            "orange",new Fruit("orange",10000),
+            "strawberry", new Fruit("strawberry", 20000),
+            "mango", new Fruit("mango",30000)
+    ));
+
+    @Override
+    public Fruit getFruitByName(String name) {
+        System.out.println("Repository에서 " + name +" 조회");
+        cachedFruitName.computeIfAbsent(name, key -> fruitRepository.getFruitByName(name));
+        return cachedFruitName.get(name);
+    }
+}
+```
+그런데 만약 Repository가 우리가 구현한 객체가 아니라 수정이 불가능하다면 캐싱을 이렇게 직접 적용이 불가능 할 것이다. 이를 프록시를 통해 해결해보자.
+
+```java
+public class FruitRepository{
+    private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
+            "orange",new Fruit("orange",10000),
+            "strawberry", new Fruit("strawberry", 20000),
+            "mango", new Fruit("mango",30000)
+    ));
+
+
+    public Fruit getFruitByName(String name) {
+        System.out.println("Repository에서 과일 조회");
+        return fruitList.getOrDefault(name,null);
+    }
+}
+
+@Repository
+@RequiredArgsConstructor
+public class FruitRepositoryProxy extends FruitRepository {
+    private static final Map<String, Fruit> cachedFruitName = new HashMap<>();
+    private final FruitRepository fruitRepository;
+
+    @Override
+    public Fruit getFruitByName(String name) {
+        cachedFruitName.computeIfAbsent(name, key -> fruitRepository.getFruitByName(name));
+        return cachedFruitName.get(name);
+    }
+}
+
+@Controller
+@RequestMapping("/ex")
+@RequiredArgsConstructor
+public class FruitController {
+    private final FruitRepository fruitRepository;
+
+    @GetMapping("/fruit")
+    public ResponseEntity<Fruit> getFruit(@RequestParam String name) {
+        return ResponseEntity.ok(fruitRepository.getFruitByName(name));
+    }
+}
+```
+자식클래스는 부모클래스로 업캐스팅이 될 수 있다는 점을 이용하여 위와 같이 프록시를 구현할 수 있다.
+
+
+만일 Repository를 수정할 수 있어 Interface를 구현하도록 만들 수 있다면 아래와 같이 구현을 할 수도 있다.
+```java
+public interface FruitRepositoryInterface {
+    Fruit getFruitByName(String name);
+}
+
+public class FruitRepository implements FruitRepositoryInterface{
+    private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
+            "orange",new Fruit("orange",10000),
+            "strawberry", new Fruit("strawberry", 20000),
+            "mango", new Fruit("mango",30000)
+    ));
+
+
+    public Fruit getFruitByName(String name) {
+        System.out.println("Repository에서 과일 조회");
+        return fruitList.getOrDefault(name,null);
+    }
+}
+@Repository
+public class FruitRepositoryProxy implements FruitRepositoryInterface {
+    private static final Map<String, Fruit> cachedFruitName = new HashMap<>();
+    private final FruitRepositoryInterface fruitRepository;
+
+    public FruitRepositoryProxy() {
+        this.fruitRepository = new FruitRepository();
+    }
+
+    @Override
+    public Fruit getFruitByName(String name) {
+        cachedFruitName.computeIfAbsent(name, key -> fruitRepository.getFruitByName(name));
+        return cachedFruitName.get(name);
+    }
+}
+
+@Controller
+@RequestMapping("/ex")
+@RequiredArgsConstructor
+public class FruitController {
+    private final FruitRepositoryInterface fruitRepository;
+
+    @GetMapping("/fruit")
+    public ResponseEntity<Fruit> getFruit(@RequestParam String name) {
+        return ResponseEntity.ok(fruitRepository.getFruitByName(name));
+    }
+}
+```
+
+<br><br>
+
+## 적용할 수 있는 곳
+- 지연 초기화 : 시스템 리소스를 많이 차지하는 서비스 객체가 존재할때 앱이 시작되는 시점에 객체를 생성하는 것이 아니라 실제로 사용하는 시점에 사용하도록하여 성능향상을 꾀하고자 할때
+- 접근 제어 : 특정 클라이언트만 서비스 객체를 사용할 수 있도록 하려는 경우
+- 로깅 요청 : 실제 서비스 객체에 요청을 전달하기 전에 제어할 수 있다는 점을 이용하여 요청을 로깅하려고 하는 경우
+- 캐싱 : 서비스 로직을 통한 반환값이 일정하며 처리시간이 긴 경우에 결과를 캐시하고 캐시의 수명주기를 관리하고자 하는 경우
+- 자원 해제 : File, datasource등 자원을 해제하지 않으면 많은 리소스를 잡아먹는 객체의 경우 자원해제를 사용자가 아닌 프록시객체에게 위임하고자 하는 경우
+
+<br><br>
+
+## 다른 패턴들과 비교
+- Adapter : 랩핑된 객체와 다른 인터페이스를 제공하지만, 프록시는 동일한 인터페이스를 제공한다.
+- Facade : 객체를 버퍼링하고 자체적으로 초기화한다는 점은 비슷하지만 프록시는 해당 서비스 객체와 동일한 인터페이스를 갖는다.
+- Decorator : 구조가 매우 비슷하며 특정 작업을 다른 객체에게 위임하는 점은 비슷하나 프록시는 객체 자체적으로 서비스 객체의 수명주기, 행동을 관리하지만 데코레이터는 행동의 제어가 클라이언트에게 있다.
+    
+    데코레이터는 `런타임`에 `기능을 추가`하는 것이 목적, Proxy는 `컴파일 타임`에 `행동을 제어` 하는 것이 목적
+
+<br><br><br>
+
+
+## Spring 프로젝트에 Proxy를 통해 서비스를 확장해보자!
 ```java
 public class Fruit {
     private String name;
@@ -276,6 +441,9 @@ public class FruitRepository {
 
 하지만 이는 로깅을 적용하고 싶은 빈마다 LogTrace를 주입시켜주고 비즈니스로직을 try로 감싸 기능을 추가해주어야 한다. 굉장히 보일러플레이트도 늘어날뿐 아니라 단일책임원칙에도 위배되고 있다. 
 
+Proxy를 시작으로 AOP까지 확장해가며 서비스를 확장시켜보자.
+
+<br>
 
 ### 1. Concreate Proxy
 ```java
@@ -404,7 +572,9 @@ public FruitRepository fruitRepository(LogTrace logTrace) {
 }
 ```
 
-### 3. Interface Proxy
+<br>
+
+### 2. Interface Proxy
 ```java
 @RequestMapping
 @ResponseBody
@@ -561,6 +731,8 @@ public class InterfaceProxyConfig {
 }
 ```
 
+<br>
+
 ### 3. DynamicProxy
 ```java
 public class LogTraceBasicHandler implements InvocationHandler {
@@ -708,8 +880,11 @@ public class DynamicProxyFilterConfig {
 }
 ```
 
+<br>
+
 ### 4. ProxyFactory
-AOP를 이용한 방법
+여기서부터는 AOP를 이용한 방법이다. spring에서 제공하는 aop api를 이용해보자.
+
 ```java
 @RequiredArgsConstructor
 public class LogTraceAdvice implements MethodInterceptor {
@@ -780,6 +955,8 @@ public class ProxyFactoryConfig {
 }
 ```
 
+<br>
+
 ### 5. postProcessor
 ```java
 @Slf4j
@@ -836,7 +1013,7 @@ public class BeanPostProcessorConfig {
 ```
 
 ### 6. AutoProxy
-// implementation 'org.springframework.boot:spring-boot-starter-aop'
+여기서부터는 pointcut을 표현식을 통해서 적용하는 패턴으로 `implementation 'org.springframework.boot:spring-boot-starter-aop'`를 추가해주어야 한다.
 
 ```java
 @Configuration
@@ -874,6 +1051,8 @@ public class AutoProxyConfig {
 }
 ```
 
+<br>
+
 ### 7. AOP (pointcut expression)
 ```java
 @Slf4j
@@ -904,6 +1083,8 @@ public class LogTraceAspect {
     }
 }
 ```
+
+<br>
 
 ### 8. AOP (annotation)
 ```java
@@ -991,5 +1172,9 @@ public class AopConfig {
 
 ```
 
-## 차이점
-- Decorator : `런타임`에 `기능을 추가`하는 것이 목적, Proxy는 `컴파일 타임`에 `행동을 제어` 하는 것이 목적
+<br><br><br>
+
+### Reference
+- [https://refactoring.guru/design-patterns/facade](https://refactoring.guru/design-patterns/facade)
+- [인프런 디자인 패턴 강의](https://www.inflearn.com/course/%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4/dashboard)
+- [인프런 스프링 강의](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%ED%95%B5%EC%8B%AC-%EC%9B%90%EB%A6%AC-%EA%B3%A0%EA%B8%89%ED%8E%B8/dashboard)
