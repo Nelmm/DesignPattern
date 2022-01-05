@@ -4,7 +4,7 @@
 
 <br>
 
-## 코드
+## 1. 코드
 ```java
 public class FruitRepository{
     private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
@@ -146,7 +146,7 @@ public class FruitController {
 
 <br><br>
 
-## 적용할 수 있는 곳
+## 2. 적용할 수 있는 곳
 - 지연 초기화 : 시스템 리소스를 많이 차지하는 서비스 객체가 존재할때 앱이 시작되는 시점에 객체를 생성하는 것이 아니라 실제로 사용하는 시점에 사용하도록하여 성능향상을 꾀하고자 할때
 - 접근 제어 : 특정 클라이언트만 서비스 객체를 사용할 수 있도록 하려는 경우
 - 로깅 요청 : 실제 서비스 객체에 요청을 전달하기 전에 제어할 수 있다는 점을 이용하여 요청을 로깅하려고 하는 경우
@@ -155,7 +155,7 @@ public class FruitController {
 
 <br><br>
 
-## 다른 패턴들과 비교
+## 3. 다른 패턴들과 비교
 - Adapter : 랩핑된 객체와 다른 인터페이스를 제공하지만, 프록시는 동일한 인터페이스를 제공한다.
 - Facade : 객체를 버퍼링하고 자체적으로 초기화한다는 점은 비슷하지만 프록시는 해당 서비스 객체와 동일한 인터페이스를 갖는다.
 - Decorator : 구조가 매우 비슷하며 특정 작업을 다른 객체에게 위임하는 점은 비슷하나 프록시는 객체 자체적으로 서비스 객체의 수명주기, 행동을 관리하지만 데코레이터는 행동의 제어가 클라이언트에게 있다.
@@ -165,7 +165,7 @@ public class FruitController {
 <br><br><br>
 
 
-## Spring 프로젝트에 Proxy를 통해 서비스를 확장해보자!
+## 4. Spring 프로젝트에 Proxy를 통해 서비스를 확장해보자!
 ```java
 public class Fruit {
     private String name;
