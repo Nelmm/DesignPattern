@@ -3,7 +3,7 @@
 > 기존 코드를 클라이언트가 사용하는 인터페이스의 구현체로 박꿔주는 패턴
 > 
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/473cadc8-bad2-4f31-9c41-2abe7c74a5c2/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054742Z&X-Amz-Expires=86400&X-Amz-Signature=1526f4d3d36dadfe051bffa55110f510e30264a87f5d4853b134ed65eed4eba0&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![image](https://user-images.githubusercontent.com/32676275/147425566-03d5b437-be20-415b-9ce0-7476b2653f08.png)
 
 - `Client`는 Target Interface를 사용
 - `Adaptee`를 사용하기 위해 `Target`과 `Adaptee`를 연결할 `Adapter`사용
@@ -53,7 +53,7 @@ C타입 포트
 8핀 포트
 ```
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/fe5ee95b-1f25-4d71-a98a-fdf32c2cb027/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054809Z&X-Amz-Expires=86400&X-Amz-Signature=f9960b940637964434ccde3a973017736ea328b2af29a86530244825caa94d56&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![image](https://user-images.githubusercontent.com/32676275/147425587-d008037a-495f-4a29-9a07-09645af636c2.png)
 
 - CType: `Target`
 - Adapter: `Adapter`

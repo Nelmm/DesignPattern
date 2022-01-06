@@ -3,7 +3,6 @@
 > 기존 코드를 변경하지 않고 부가 기능을 동적으로(유연하게) 추가하는 패턴
 
 상속이 아닌 위임을 사용해서 보다 유연하게(**런타임에**) 부가 기능을 추가하는 것도 가능하다.
-기능 확장이 필요할 때 상속대신 사용할 수 있는 패턴.
 
 ![1](https://user-images.githubusercontent.com/42997924/147181146-0404abec-a5ae-4fdf-9edf-506696d813b6.png)
 
@@ -29,7 +28,7 @@
 > 4. 공백도 없고 필터링도 됐으면 좋겠어요.  
 > 5. 욕설을 제거됐으면 좋겠어요.  
 > 6. 공백 +  광고 필터링 + 욕설 필터링이 됐으면 좋겠어요.  
->    ...
+> ...
 
 클라이언트는 결국 댓글(Comment)을 추가하는 행동을 하지만, **요구사항이 빈번하게 변경되는 상황**이다.
 
@@ -330,8 +329,6 @@ public class App {
 
 스프링부트를 쓰고 있다면 자바 메소드를 통해 빈을 정의할 수 있다. 이 코드에 application.properties에 설정한 값에 따라 각기 다른 빈을 만들어서 전달해주도록 하면 된다.
 
-[다른 예제](/구조/5주차-데코레이터/hong.md)
-
 ## 4. 장단점
 
 ### 4-1. 장점
@@ -444,13 +441,14 @@ public static void main(String[] args) {
     -   이 데코레이터를 상속받는 클래스를 만들어서WebFilter를 거쳐가는 모든 요청이 이 데코레이터의 하위 클래스를 거쳐가게 된다.
     -   리액티브의 WebFilter를 상속해서 만든 Filter를 거쳐가는 요청인 ServerHttpRequest를 (데코레이터에) 담아준다.
 
-
-
-## 다른 패턴들과 비교
-
-- 어댑터 : 기능을 확장한다는 점에서 비슷하다고 할 수 있으나 어댑터는 기존 인터페이스와는 다른 인터페이스를 반환하고, 데코레이터는 인터페이스를 변경하지 않고 기능이 향상된 인터페이스를 제공한다.
-- 컴포짓 : 합성을 이용한 패턴이라는 점에서는 비슷하나 컴포짓은 관련된 기능을 가지고 있는 객체들을 하나의 추상층으로 묶어 결과를 집계(요약) 한다면, 데코레이터는 해당 객체에 책임을 추가한다.
-
-  
-
-  ![Composite](/객체생성/3주차-빌더/image/abstractFactory-architecture.png)
+```
+public class DecoratorInSpring {
+    public static void main(String[] args) {
+        // 빈 설정 데코레이터
+        BeanDefinitionDecorator decorator;
+        // 웹플럭스 HTTP 요청 /응답 데코레이터
+        ServerHttpRequestDecorator httpRequestDecorator;
+        ServerHttpResponseDecorator httpResponseDecorator;
+    }
+}
+```
