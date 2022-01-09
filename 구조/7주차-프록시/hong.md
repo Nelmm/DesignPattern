@@ -5,6 +5,7 @@
 <br>
 
 ## 1. 코드
+
 ```java
 public class FruitRepository{
     private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
@@ -32,7 +33,9 @@ public class FruitController {
     }
 }
 ```
+
 아주 단순하게 구현하기 위해 map을 통한 데이터 접근을 구현하며 이를 db를 대체한다고 하자. 이런 객체를 controller에서 이용하여 데이터를 조회하는 프로그램이 있다고하자. 그런데 조회할때 같은 과일이름의 조회결과는 캐싱을 추가하려고 한다. 그러면 아래와 같이 코드를 작성할 수 있을 것이다.
+
 ```java
 @Repository
 public class FruitRepository {
@@ -51,6 +54,7 @@ public class FruitRepository {
     }
 }
 ```
+
 그런데 만약 Repository가 우리가 구현한 객체가 아니라 수정이 불가능하다면 캐싱을 이렇게 직접 적용이 불가능 할 것이다. 이를 프록시를 통해 해결해보자.
 
 ```java
@@ -93,10 +97,11 @@ public class FruitController {
     }
 }
 ```
+
 자식클래스는 부모클래스로 업캐스팅이 될 수 있다는 점을 이용하여 위와 같이 프록시를 구현할 수 있다.
 
-
 만일 Repository를 수정할 수 있어 Interface를 구현하도록 만들 수 있다면 아래와 같이 구현을 할 수도 있다.
+
 ```java
 public interface FruitRepositoryInterface {
     Fruit getFruitByName(String name);
@@ -147,6 +152,7 @@ public class FruitController {
 <br><br>
 
 ## 2. 적용할 수 있는 곳
+
 - 지연 초기화 : 시스템 리소스를 많이 차지하는 서비스 객체가 존재할때 앱이 시작되는 시점에 객체를 생성하는 것이 아니라 실제로 사용하는 시점에 사용하도록하여 성능향상을 꾀하고자 할때
 - 접근 제어 : 특정 클라이언트만 서비스 객체를 사용할 수 있도록 하려는 경우
 - 로깅 요청 : 실제 서비스 객체에 요청을 전달하기 전에 제어할 수 있다는 점을 이용하여 요청을 로깅하려고 하는 경우
@@ -156,17 +162,18 @@ public class FruitController {
 <br><br>
 
 ## 3. 다른 패턴들과 비교
+
 - Adapter : 랩핑된 객체와 다른 인터페이스를 제공하지만, 프록시는 동일한 인터페이스를 제공한다.
 - Facade : 객체를 버퍼링하고 자체적으로 초기화한다는 점은 비슷하지만 프록시는 해당 서비스 객체와 동일한 인터페이스를 갖는다.
 - Decorator : 구조가 매우 비슷하며 특정 작업을 다른 객체에게 위임하는 점은 비슷하나 프록시는 객체 자체적으로 서비스 객체의 수명주기, 행동을 관리하지만 데코레이터는 행동의 제어가 클라이언트에게 있다.
-    
-    데코레이터는 `런타임`에 `기능을 추가`하는 것이 목적, Proxy는 `컴파일 타임`에 `행동을 제어` 하는 것이 목적
+  데코레이터는 `런타임`에 `기능을 추가`하는 것이 목적, Proxy는 `컴파일 타임`에 `행동을 제어` 하는 것이 목적
 
 <br><br><br>
 
-
 ## 4. Spring 프로젝트에 Proxy를 통해 서비스를 확장해보자!
+
 ```java
+//Entity
 public class Fruit {
     private String name;
     private int price;
@@ -226,7 +233,9 @@ public class FruitRepsitory {
     }
 }
 ```
+
 ```java
+//새로 추가할 기능의 객체
 @Slf4j
 public class LogTrace {
 
@@ -358,7 +367,8 @@ public class LogTrace {
     }
 }
 ```
-위와 같은 controller-service-repository 계층의 앱이 존재할때 각 계층의 log를 깊이별로 tracing하는 기능을 추가하고자 할때 아래와 같이 추가할 수 있다.
+
+위와 같은 controller-service-repository 계층의 앱이 존재하고 각 계층의 log를 깊이별로 tracing하는 기능을 LogTrace객체를 통하여 추가하고자 할때 일반적인 방법으로는 아래와 같이 추가할 수 있다.
 
 ```java
 @Controller
@@ -439,14 +449,18 @@ public class FruitRepository {
 2021-12-30 10:12:08.208  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] FruitsController.getFruitLogging() time=4ms
 ```
 
-하지만 이는 로깅을 적용하고 싶은 빈마다 LogTrace를 주입시켜주고 비즈니스로직을 try로 감싸 기능을 추가해주어야 한다. 굉장히 보일러플레이트도 늘어날뿐 아니라 단일책임원칙에도 위배되고 있다. 
+하지만 이는 로깅을 적용하고 싶은 빈마다 LogTrace를 주입시켜주고 비즈니스로직을 try로 감싸 기능을 추가해주어야 한다. 굉장히 보일러플레이트도 늘어날뿐 아니라 단일책임원칙에도 위배되고 있다.
 
 Proxy를 시작으로 AOP까지 확장해가며 서비스를 확장시켜보자.
 
 <br>
 
 ### 1. Concreate Proxy
+
+자식 클래스는 부모클래스로 업캐스팅이 가능하다는 점을 이용하여 상속을 통해서 프록시를 구현한 방법.
+
 ```java
+//컨트롤러
 @RequestMapping
 @RequiredArgsConstructor
 public class FruitController {
@@ -457,6 +471,8 @@ public class FruitController {
         return ResponseEntity.ok(fruitService.getFruit(name));
     }
 }
+
+//상속을 통해 컨트롤러 프록시객체 생성
 public class FruitControllerProxy extends FruitController {
     private final FruitController target;
     private final LogTrace trace;
@@ -482,6 +498,7 @@ public class FruitControllerProxy extends FruitController {
     }
 }
 
+//service
 @RequiredArgsConstructor
 public class FruitService {
     private final FruitRepository fruitRepository;
@@ -490,6 +507,8 @@ public class FruitService {
         return fruitRepository.getFruitByName(name);
     }
 }
+
+//Service proxy 객체
 public class FruitServiceProxy extends FruitService{
     private final FruitService target;
     private final LogTrace trace;
@@ -515,6 +534,7 @@ public class FruitServiceProxy extends FruitService{
     }
 }
 
+//Repository
 @RequiredArgsConstructor
 public class FruitRepository {
     private static final Map<String,Fruit> fruitList = new HashMap<>(Map.of(
@@ -529,6 +549,7 @@ public class FruitRepository {
     }
 }
 
+//Repository Proxy
 public class FruitRepositoryProxy extends FruitRepository {
     private final FruitRepository target;
     private final LogTrace trace;
@@ -553,30 +574,44 @@ public class FruitRepositoryProxy extends FruitRepository {
     }
 }
 
-@Bean
-public FruitController fruitController(LogTrace logTrace) {
-    FruitController controller = new FruitController(fruitService(logTrace));
-    return new FruitControllerProxy(controller,logTrace);
-}
+//Bean등록을 위한 Config 클래스
+@Configuration
+public class AppConfig {
+    @Bean
+    public FruitController fruitController(LogTrace logTrace) {
+        //Controller객체 생성
+        FruitController controller = new FruitController(fruitService(logTrace));
 
-@Bean
-public FruitService fruitService(LogTrace logTrace) {
-    FruitService service = new FruitService(fruitRepository(logTrace));
-    return new FruitServiceProxy(service,logTrace);
-}
+        //위에서 만든 Controller를 주입하여 Proxy 컨트롤러를 빈으로 등록
+        return new FruitControllerProxy(controller,logTrace);
+    }
 
-@Bean
-public FruitRepository fruitRepository(LogTrace logTrace) {
-    FruitRepository repository = new FruitRepository();
-    return new FruitRepositoryProxy(repository,logTrace);
+    @Bean
+    public FruitService fruitService(LogTrace logTrace) {
+        //Service객체 생성
+        FruitService service = new FruitService(fruitRepository(logTrace));
+
+        //Service Proxy객체 빈등록
+        return new FruitServiceProxy(service,logTrace);
+    }
+
+    @Bean
+    public FruitRepository fruitRepository(LogTrace logTrace) {
+        FruitRepository repository = new FruitRepository();
+        return new FruitRepositoryProxy(repository,logTrace);
+    }
 }
 ```
 
 <br>
 
 ### 2. Interface Proxy
+
+프록시 패턴과 같이 인터페이스를 통하여 프록시 객체를 생성하는 방법으로 보통 컨트롤러는 인터페이스를 구현하지 않지만 예제를 위하여 컨트롤러도 인터페이스를 구현.
+
 ```java
-@RequestMapping
+//Controller 인터페이스
+@RequestMapping     //해당 어노테이션이 존재해야 컨트롤러로 인지
 @ResponseBody
 public interface FruitController {
     @GetMapping("/v1/fruit")
@@ -586,6 +621,7 @@ public interface FruitController {
     ResponseEntity<Fruit> getFruitLogging(@RequestParam String name);
 }
 
+//구현체
 @RequiredArgsConstructor
 public class FruitControllerImpl {
     private final FruitService fruitService;
@@ -601,7 +637,7 @@ public class FruitControllerImpl {
     }
 }
 
-
+//Serivce 인터페이스
 public interface FruitService {
     Fruit getFruit(String name);
 }
@@ -615,6 +651,7 @@ public class FruitServiceImpl {
     }
 }
 
+//Repository 인터페이스
 public interface FruitRepository {
     Fruit getFruitByName(String name);
 }
@@ -633,6 +670,8 @@ public class FruitRepositoryImpl {
     }
 }
 
+
+//위에서 정의한 인터페이스를 구현하여 Proxy 객체 생성
 public class FruitControllerProxy implements FruitController {
     private final FruitController target;
     private final LogTrace trace;
@@ -709,6 +748,7 @@ public class FruitRepositoryProxy implements FruitRepository {
     }
 }
 
+//Bean으로 구현체가 아닌 Proxy객체 등록을 위한 Config
 @Configuration
 public class InterfaceProxyConfig {
     @Bean
@@ -734,7 +774,13 @@ public class InterfaceProxyConfig {
 <br>
 
 ### 3. DynamicProxy
+
+Java에서 제공하는 기능으로 동적으로 프록시를 생성할 수 있는 방법이며, DynamicProxy는 인터페이스가 존재해야지만 프록시를 생성할 수 있다. `Proxy`의 `newInstance()`메서드를 통해서 프록시 객체를 정의할 필요없이 동적으로 프록시객체를 생성할 수 있다.
+
+newInstance()의 두번째 인자로 인터페이스들을, 세번째 인자로 `InvocationHandler`를 구현한 Handler를 주입해줌으로써 생성이 가능하다.
+
 ```java
+//Dynamic Proxy를 위한 InvocationHandler 구현체
 public class LogTraceBasicHandler implements InvocationHandler {
 
     private final Object target;
@@ -745,17 +791,20 @@ public class LogTraceBasicHandler implements InvocationHandler {
         this.logTrace = logTrace;
     }
 
+    //해당 메서드를 구현함으로써 프록시 기능을 수행
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
         LogTrace.TraceStatus status = null;
         try {
+            //이전에는 각 계층마다 Proxy를 정의해주었기 때문에 log message에 필요한 클래스이름을 하드코딩했지만 여기서부터는 동적으로 Proxy를 만들기 때문에 동적으로 클래스이름을 얻어와 log내용 작성
             String message = method.getDeclaringClass().getSimpleName() + "." +
                     method.getName() + "()";
             status = logTrace.begin(message);
 
-            //로직 호출
+            //실제 로직 호출
             Object result = method.invoke(target, args);
+
             logTrace.end(status);
             return result;
         } catch (Exception e) {
@@ -765,6 +814,7 @@ public class LogTraceBasicHandler implements InvocationHandler {
     }
 }
 
+//DynaicProxy를 통해 생성된 프록시객체를 Bean으로 등록
 @Configuration
 public class DynamicProxyBasicConfig {
 
@@ -798,7 +848,13 @@ public class DynamicProxyBasicConfig {
 
 Proxy.newProxyInstance()를 통해 Proxy 객체를 런타임에 생성할 수 있는데, 이때 인자로 InvocateionHandler를 넘겨주어 ClassLoader의 객체가 load될때 해당 핸들러로 행동을 제어할 수 있다.
 
+DynamicProxy를 구현하기 위해 InvocationHandler를 구현하여 사용하고 있는데 이때 invoke()메서드 내부에서 실제 로직를 시작하기 위한 매서드로 `method.invoke()`를 수행한다.
+
+이 invoke()메서드는 내부적으로 Reflection을 사용하여 동작하고 Spring framework에서 AOP를 위해 default로 사용되는 방법이다.
+
 #### 패턴 매칭
+
+위의 방법은 해당 클래스내부의 모든 메서드라면 logtrace기능이 수행되게 되는데 같은 클래스안에서 특정메서드에만 수행하게 하고 싶을 수 있을 것이다. 이때 메서드 이름을 `pattern`을 통해 제한하고자 할때 아래와 같이 구현할 수도 있다.
 
 ```java
 public class LogTraceFilterHandler implements InvocationHandler {
@@ -817,11 +873,13 @@ public class LogTraceFilterHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
         //메서드 이름 필터
+        //메서드 이름이 패턴에 일치하지 않는다면 바로 메서드 수행
         String methodName = method.getName();
         if (!PatternMatchUtils.simpleMatch(patterns, methodName)) {
             return method.invoke(target, args);
         }
 
+        //패턴이 일지한다면 logtrace기능 추가하여 메서드 수행
         LogTrace.TraceStatus status = null;
         try {
             String message = method.getDeclaringClass().getSimpleName() + "." +
@@ -883,12 +941,18 @@ public class DynamicProxyFilterConfig {
 <br>
 
 ### 4. ProxyFactory
-여기서부터는 AOP를 이용한 방법이다. spring에서 제공하는 aop api를 이용해보자.
+
+여기서부터는 AOP를 이용한 방법이며 CGLIB를 이용한 방법이다.
+
+CGLIB를 통해 프록시를 생성하고자 할때 `MethodInterceptor`를 구현한 클래스를 가지고 프록시를 생성할 수 있다.
+
+CGLIB는 DynamicProxy와 다르게 인터페이스가 아닌 상속을 통해 프록시를 생성하는 방법이며 spring boot에서 AOP 기능을 제공하는데 default로 사용되는 방식이기 때문에 spring boot를 이용하고 있다면 별도의 라이브러리를 추가할 필요가 없다.
 
 ```java
 @RequiredArgsConstructor
 public class LogTraceAdvice implements MethodInterceptor {
     private final LogTrace logTrace;
+
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
@@ -916,11 +980,18 @@ public class LogTraceAdvice implements MethodInterceptor {
 public class ProxyFactoryConfig {
     @Bean
     public FruitController orderController(LogTrace logTrace) {
+        //프록시를 적용할 실제 객체 생성
         FruitController orderController = new FruitControllerImpl(orderService(logTrace));
+
+        //ProxyFactory 생성
         ProxyFactory factory = new ProxyFactory(orderController);
+
+        //Advisor를 ProxyFactory에 추가
         factory.addAdvisor(getAdvisor(logTrace));
         FruitController proxy = (FruitController) factory.getProxy();
         log.info("ProxyFactory proxy={}, target={}", proxy.getClass(), orderController.getClass());
+
+        //생성한 Proxy를 빈으로 등록
         return proxy;
     }
 
@@ -945,10 +1016,11 @@ public class ProxyFactoryConfig {
     }
 
     private Advisor getAdvisor(LogTrace logTrace) {
-        //pointcut
+        //Logtrace기능이 적용될 pointcut 정의
         NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
         pointcut.setMappedNames("getFruit*");
-        //advice
+
+        //실제 LogTrace기능이 적용되는 로직이 정의된 advice
         LogTraceAdvice advice = new LogTraceAdvice(logTrace);
         return new DefaultPointcutAdvisor(pointcut, advice);
     }
@@ -958,6 +1030,11 @@ public class ProxyFactoryConfig {
 <br>
 
 ### 5. postProcessor
+
+Bean을 생성하고 컨테이너에 등록하기 전에 후처리기(PostProcessor)를 통해 특정 작업을 수행할 수 있다.(기능 추가, 제어 등)
+
+이를 위해 `BeanPostProcessor`를 구현하여 후처리기를 정의할 수 있다. 이 후처리기에 4번방법인 `ProxyFactory`를 추가하여 특정패키지,메서드라면 동적으로 Proxy객체를 만들어 해당 Proxy를 빈으로 등록 할 수 있다.
+
 ```java
 @Slf4j
 @RequiredArgsConstructor
@@ -992,6 +1069,7 @@ public class PackageLogTracePostProcessor implements BeanPostProcessor {
     }
 }
 
+//빈을 생성하고 등록할때 이용할 후처리기(postProcessor)등록
 @Slf4j
 @Configuration
 public class BeanPostProcessorConfig {
@@ -1013,12 +1091,15 @@ public class BeanPostProcessorConfig {
 ```
 
 ### 6. AutoProxy
+
 여기서부터는 pointcut을 표현식을 통해서 적용하는 패턴으로 `implementation 'org.springframework.boot:spring-boot-starter-aop'`를 추가해주어야 한다.
 
 ```java
 @Configuration
 public class AutoProxyConfig {
-//    @Bean
+
+    //지금까지 예시처럼 특정 메서드이름과 같다면 수행되는 방식
+    @Bean
     public Advisor advisor1(LogTrace logTrace) {
         //pointcut
         NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
@@ -1028,9 +1109,10 @@ public class AutoProxyConfig {
         return new DefaultPointcutAdvisor(pointcut, advice);
     }
 
-//    @Bean
+    @Bean
     public Advisor advisor2(LogTrace logTrace) {
         //pointcut
+        //spring-aop에서 제공하는 AspectJExpressionPointcut를 이용하면 특정문법으로 point cut을 정의할 수 있다.
         AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
         pointcut.setExpression("execution(* com.example.springex.proxy._6_autoProxy..*(..))");
         //advice
@@ -1053,7 +1135,8 @@ public class AutoProxyConfig {
 
 <br>
 
-### 7. AOP (pointcut expression)
+### 7. AOP 어노테이션 (표현식으로 빈 등록)
+
 ```java
 @Slf4j
 @Aspect
@@ -1064,6 +1147,7 @@ public class LogTraceAspect {
         this.logTrace = logTrace;
     }
 
+    //정의한 형식에 맞는 메서드라면 execute를 수행하여 제어
     @Around("execution(* com.example.springex.proxy._7_aop.app..*(..)) && !execution(* com.example.springex.proxy._7_aop.app.FruitController.getFruit(..))")
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
         LogTrace.TraceStatus status = null;
@@ -1086,7 +1170,8 @@ public class LogTraceAspect {
 
 <br>
 
-### 8. AOP (annotation)
+### 8. AOP 어노테이션 (custom annotation을 통한 등록)
+
 ```java
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD,ElementType.TYPE})
@@ -1175,6 +1260,7 @@ public class AopConfig {
 <br><br><br>
 
 ### Reference
+
 - [https://refactoring.guru/design-patterns/facade](https://refactoring.guru/design-patterns/facade)
 - [인프런 디자인 패턴 강의](https://www.inflearn.com/course/%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4/dashboard)
 - [인프런 스프링 강의](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%ED%95%B5%EC%8B%AC-%EC%9B%90%EB%A6%AC-%EA%B3%A0%EA%B8%89%ED%8E%B8/dashboard)
