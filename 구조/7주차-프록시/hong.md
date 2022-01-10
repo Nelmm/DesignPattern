@@ -170,7 +170,7 @@ public class FruitController {
 
 <br><br><br>
 
-## 4. Spring 프로젝트에 Proxy를 통해 서비스를 확장해보자!
+## 4. Spring 프로젝트에 프록시를 통해 서비스를 확장해보자!
 
 ```java
 //Entity
@@ -1094,6 +1094,8 @@ public class BeanPostProcessorConfig {
 
 여기서부터는 pointcut을 표현식을 통해서 적용하는 패턴으로 `implementation 'org.springframework.boot:spring-boot-starter-aop'`를 추가해주어야 한다.
 
+AspectJExpressionPointcut을 이용해 pointcut을 정의할 수 있는데 이름에 AspectJ가 들어간다고 해서 AspectJ가 사용되는 것은 아니다.
+
 ```java
 @Configuration
 public class AutoProxyConfig {
@@ -1123,6 +1125,7 @@ public class AutoProxyConfig {
     @Bean
     public Advisor advisor3(LogTrace logTrace) {
         //pointcut
+        //표현식에도 &&, || , ! 와 같은 연산자 사용가능
         AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
         pointcut.setExpression("execution(* com.example.springex.proxy._6_autoProxy..*(..)) && !execution(* com.example.springex.proxy._6_autoProxy.FruitController.getFruit(..))");
 
@@ -1173,6 +1176,7 @@ public class LogTraceAspect {
 ### 8. AOP 어노테이션 (custom annotation을 통한 등록)
 
 ```java
+//Custom 어노테이션 생성
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD,ElementType.TYPE})
 public @interface Log {
@@ -1188,6 +1192,7 @@ public class FruitController {
         return ResponseEntity.ok(fruitService.getFruit(name));
     }
 
+    //LogTrace기능을 이 메서드에만 적용
     @Log
     @GetMapping("/v2/fruit")
     public ResponseEntity<Fruit> getFruitLogging(@RequestParam String name){
@@ -1195,6 +1200,7 @@ public class FruitController {
     }
 }
 
+//Service는 모든 메서드에 LogTrace기능 적용
 @Log
 @Service
 @RequiredArgsConstructor
@@ -1256,6 +1262,64 @@ public class AopConfig {
 }
 
 ```
+
+### 9. 주의사항
+```java
+@Controller
+@RequiredArgsConstructor
+public class FruitController {
+    private final FruitService fruitService;
+
+    @GetMapping("/v1/fruit")
+    public ResponseEntity<Fruit> getFruit(@RequestParam String name){
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+
+    @GetMapping("/v2/fruit")
+    public ResponseEntity<Fruit> getFruitLogging(@RequestParam String name){
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+
+    @GetMapping("/v3/fruit")
+    private ResponseEntity<Fruit> getF(@RequestParam String name) {
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+}
+GET http://localhost:8080/v3/fruit?name=orange 호출시 200 응답
+```
+AOP가 적용되지 않는 클래스라면 따로 spring 이 프록시를 만들어 사용하지 않기 때문에 내부 메서드가 private이어도 상관없이 메서드 호출이 정상적으로 수행된다.
+
+```java
+@Controller
+@RequiredArgsConstructor
+public class FruitController {
+    private final FruitService fruitService;
+
+    @GetMapping("/v1/fruit")
+    public ResponseEntity<Fruit> getFruit(@RequestParam String name){
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+
+    @Log
+    @GetMapping("/v2/fruit")
+    public ResponseEntity<Fruit> getFruitLogging(@RequestParam String name){
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+
+    @GetMapping("/v3/fruit")
+    private ResponseEntity<Fruit> getF(@RequestParam String name) {
+        return ResponseEntity.ok(fruitService.getFruit(name));
+    }
+}
+
+//
+GET http://localhost:8080/v3/fruit?name=orange 호출시 500에러
+FruitService 가 null
+```
+하지만 AOP가 적용되는 클래스(메서드 한개라도 pointcut에 해당한다면)는 spring boot는 런타임에 cglib를 이용하여 프록시 객체를 만들어 호출하는데 이때 cglib특성이 상속을 이용하여 프록시를 구현한다는 것이다. 그런데 private 은 상속이 불가능하기 때문에 이를 호출하지 못하고 해당 클래스에 의존성 주입된 객체들이 제대로 주입되지 못하고 null이 포함되어 에러를 발생시킨다.
+
+이는 트랜잭션, AOP, Secruity에서도 발생할 수 있는 에러로 알아두면 좋을 것 같다.
+
 
 <br><br><br>
 
