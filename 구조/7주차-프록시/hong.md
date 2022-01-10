@@ -602,6 +602,7 @@ public class AppConfig {
     }
 }
 ```
+이는 LogTrace기능을 추가하려는 Bean마다 직접 Proxy객체를 생성해주어야 한다는 번거로움이 존재한다.
 
 <br>
 
@@ -771,6 +772,9 @@ public class InterfaceProxyConfig {
 }
 ```
 
+이도 1번의 방법과 마찬가지로 Proxy객체를 하나하나 직접 생성해주어야 하며, 인터페이스가 존재하지 않는 경우라면 억지로 인터페이스를 생성해야하는 문제점이 존재한다.
+
+
 <br>
 
 ### 3. DynamicProxy
@@ -926,23 +930,17 @@ public class DynamicProxyFilterConfig {
                 new Class[]{FruitRepository.class},
                 new LogTraceFilterHandler(orderRepository, logTrace, PATTERNS));
     }
-
-     private Advisor getAdvisor(LogTrace logTrace) {
-        //pointcut
-        NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
-        pointcut.setMappedNames("getFruit*");
-        //advice
-        LogTraceAdvice advice = new LogTraceAdvice(logTrace);
-        return new DefaultPointcutAdvisor(pointcut, advice);
-    }
 }
 ```
+패턴매칭방법으로 spring AOP와 비슷한 기능을 흉내낼 수 있고, 1/2의 방법과 달리 이제는 Bean들마다 프록시 객체를 따로 정의해주지 않아도 되게 성능이 향상되었다!!
+
+하지만, Bean의 인터페이스가 존재하지 않다면 이 방법은 사용이 불가능하다는 단점이 존재한다. 이를 개선해보자.
 
 <br>
 
 ### 4. ProxyFactory
 
-여기서부터는 AOP를 이용한 방법이며 CGLIB를 이용한 방법이다.
+여기서부터는 AOP를 이용한 방법이며 `CGLIB`를 이용한 방법이다.
 
 CGLIB를 통해 프록시를 생성하고자 할때 `MethodInterceptor`를 구현한 클래스를 가지고 프록시를 생성할 수 있다.
 
@@ -1027,6 +1025,10 @@ public class ProxyFactoryConfig {
 }
 ```
 
+3번의 방법에서 개선이되어 이제는 인터페이스가 존재하지 않아도 동적으로 프록시객체를 만들 수 있게 되었다. 하지만, 여전히 불편하다!
+
+프록시 객체를 빈으로 등록하는 로직을 직접 빈마다 작성을 해주어야 한다. 이를 개선해보자.
+
 <br>
 
 ### 5. postProcessor
@@ -1090,17 +1092,23 @@ public class BeanPostProcessorConfig {
 }
 ```
 
+이 방법을 통해 빈이 생성되고 컨테이너에 등록되기 전에 실행되는 후처리기를 통해 프록시객체를 생성하고 빈을 등록하는 과정이 줄어들었다.
+
+하지만, 기능을 추가하고자하는 메서드를 필터링하는 구문이 setMappedNames()로 특정 클래스/클래스내의 특정 메서드는 제외와 같이 디테일한 경우는 필터링이 힘들다. 이를 해결하여 확장해보자.
+
 ### 6. AutoProxy
 
 여기서부터는 pointcut을 표현식을 통해서 적용하는 패턴으로 `implementation 'org.springframework.boot:spring-boot-starter-aop'`를 추가해주어야 한다.
 
-AspectJExpressionPointcut을 이용해 pointcut을 정의할 수 있는데 이름에 AspectJ가 들어간다고 해서 AspectJ가 사용되는 것은 아니다.
+AspectJExpressionPointcut을 이용해 표현식으로 pointcut을 정의할 수 있는데 이름에 AspectJ가 들어간다고 해서 AspectJ가 사용되는 것은 아니다.
+
+여기서부터는 위의 방법들처럼 프록시객체를 만들어 빈으로 등록을 하는 것이 아니라 실제 객체를 빈으로 등록하고 프록시 기능이 수행되는 메서드라면 그때 런타임에 프록시객체를 만들어 수행하는 방법.
 
 ```java
 @Configuration
 public class AutoProxyConfig {
 
-    //지금까지 예시처럼 특정 메서드이름과 같다면 수행되는 방식
+    //기존의 수행방식
     @Bean
     public Advisor advisor1(LogTrace logTrace) {
         //pointcut
@@ -1111,6 +1119,7 @@ public class AutoProxyConfig {
         return new DefaultPointcutAdvisor(pointcut, advice);
     }
 
+    //포인트컷 표현식 이용
     @Bean
     public Advisor advisor2(LogTrace logTrace) {
         //pointcut
@@ -1136,13 +1145,22 @@ public class AutoProxyConfig {
 }
 ```
 
+표현식을 통해 디테일하게 필터링을 수행할 수 있게 되었으며, 생성한 advisor를 직접 빈 후처리기에 등록하지 않아도 런타임에 스프링이 등록한 advisor를 이용해 프록시객체를 생성해준다.
+
+
+
 <br>
 
 ### 7. AOP 어노테이션 (표현식으로 빈 등록)
 
+지금까지는 `MethodInterceptor`의 구현체를 통한 Advise를 가지고 프록시를 수행했었다. 이는 내부적으로 MethodInvocation 인터페이스의 구현체(CglibMethodInvocation/Reflection...)를 가지고 메서드를 수행했다.
+
+로직이 담겨있는 빈이 별도로 존재하고 이가 수행되는 지점을 다른 클래스인 Configuration에서 정의했었는데, 이를 합쳐 실제 로직이 정의된 부분에서 수행되는지점을 정의하도록 수정해보자.
+
 ```java
 @Slf4j
 @Aspect
+@Component
 public class LogTraceAspect {
     private final LogTrace logTrace;
 
@@ -1170,10 +1188,18 @@ public class LogTraceAspect {
     }
 }
 ```
+`@Aspect` 어노테이션을 클래스에 붙여줌으로써, 해당 클래스는 advise와 pointcut이 정의된 Advisor라고 명시해줄 수 있다.
+
+이렇게 코드를 수정함으로써, 흐름을 제어하는 곳과 이것을 사용하는 곳이 분리되지 않게 되어 역할을 더 명확히 명시해 줄 수 있게 되었다.
+
 
 <br>
 
 ### 8. AOP 어노테이션 (custom annotation을 통한 등록)
+
+7의 경우도 보면 아직 불편하다! 패키지가 많아질 수록, 제외하는 메서드가 많아질 수록 표현식이 길고 복잡해지게 되어 관리가 힘들어진다. 
+
+`@Transactional` 과 같이 어노테이션을 통하여 AOP기능을 적욯해보자.
 
 ```java
 //Custom 어노테이션 생성
@@ -1235,6 +1261,8 @@ public class LogTraceAspect {
         this.logTrace = logTrace;
     }
 
+    //@annotaion()는 클래스단위에 붙은 경우만 check -> method에 붙었다면 필터링 불가
+    //@Within()을 통해 메서드단위도 필터링
     @Around("@annotation(Log) || @within(Log)")
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
         LogTrace.TraceStatus status = null;
@@ -1260,8 +1288,12 @@ public class AopConfig {
         return new LogTraceAspect(logTrace);
     }
 }
-
 ```
+
+단순한 Proxy를 시작으로 springAOP까지 총 8번의 과정을 통해 기능을 확장시켜보았다.
+
+<br>
+
 
 ### 9. 주의사항
 ```java
@@ -1287,13 +1319,14 @@ public class FruitController {
 }
 GET http://localhost:8080/v3/fruit?name=orange 호출시 200 응답
 ```
-AOP가 적용되지 않는 클래스라면 따로 spring 이 프록시를 만들어 사용하지 않기 때문에 내부 메서드가 private이어도 상관없이 메서드 호출이 정상적으로 수행된다.
+만일, AOP가 적용되지 않는 클래스라면 따로 spring 이 프록시를 만들어 사용하지 않기 때문에 내부 메서드가 private이어도 상관없이 메서드 호출이 정상적으로 수행된다.
 
 ```java
 @Controller
 @RequiredArgsConstructor
 public class FruitController {
     private final FruitService fruitService;
+    Method[] a = this.getClass().getDeclaredMethods();
 
     @GetMapping("/v1/fruit")
     public ResponseEntity<Fruit> getFruit(@RequestParam String name){
@@ -1315,10 +1348,32 @@ public class FruitController {
 //
 GET http://localhost:8080/v3/fruit?name=orange 호출시 500에러
 FruitService 가 null
-```
-하지만 AOP가 적용되는 클래스(메서드 한개라도 pointcut에 해당한다면)는 spring boot는 런타임에 cglib를 이용하여 프록시 객체를 만들어 호출하는데 이때 cglib특성이 상속을 이용하여 프록시를 구현한다는 것이다. 그런데 private 은 상속이 불가능하기 때문에 이를 호출하지 못하고 해당 클래스에 의존성 주입된 객체들이 제대로 주입되지 못하고 null이 포함되어 에러를 발생시킨다.
+//위의 경우
 
-이는 트랜잭션, AOP, Secruity에서도 발생할 수 있는 에러로 알아두면 좋을 것 같다.
+
+//정상적인 경우
+//DEbug log 추적
+
+```
+
+하지만 AOP가 적용되는 클래스(메서드 한개라도 pointcut에 해당한다면 적용)는 spring boot는 런타임에 cglib를 이용하여 프록시 객체를 만들어 호출하게 된다. 
+
+이때, 일반적인 상황처럼 public 접근지정자라면 `cglib/FastClass`를 이용해 프록시 객체를 생성한다. ( 정확하진 않지만 이미 생성된 객체(컨테이너에 등록된 빈(의존성이 주입된 객체))를 이용해 빠르게 프록시객체를 생성하는 것 같다.) 
+
+하지만 private이라면, 프록시 객체에서 메서드 접근이 불가능 할 것이다. 그래서 Enhancer를 이용하여 프록시 객체를 만들어 사용하는데 이때 제대로 의존성 주입이 이루어지지 않는 문제가 발생한다.
+
+그래서 FruitService가 null이 발생한다.
+
+
+#### 정상적인 경우의 logtrace
+![Fast](/구조/7주차-프록시/image/fastClass.PNG)
+FruitController$$FastClassBySpringCGLIB$$8f3c710b@6334에 param으로 FruitController 주입하여 메서드호출하는 방식으로 프록시 객체 생성
+
+#### private 경우 logtrace
+![Enhancer](/구조/7주차-프록시/image/enhancer.PNG)
+Enhancer를 이용해 FruitController를 상속하는 방식으로 프록시 객체 생성
+
+이는 트랜잭션, AOP, Secruity,Async 에서도 발생할 수 있는 에러로 알아두면 좋을 것 같다.
 
 
 <br><br><br>
