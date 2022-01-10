@@ -443,8 +443,8 @@ public class FruitRepository {
 //출력
 2021-12-30 10:12:08.204  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] FruitsController.getFruitLogging()
 2021-12-30 10:12:08.205  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] |-->FruitService.getFruit()
-2021-12-30 10:12:08.205  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] |   |-->FruitService.getFruit()
-2021-12-30 10:12:08.205  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] |   |<--FruitService.getFruit() time=0ms
+2021-12-30 10:12:08.205  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] |   |-->FruitRepository.getFruit()
+2021-12-30 10:12:08.205  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] |   |<--FruitRepository.getFruit() time=0ms
 2021-12-30 10:12:08.205  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] |<--FruitService.getFruit() time=0ms
 2021-12-30 10:12:08.208  INFO 16704 --- [nio-8080-exec-1] com.example.springex.proxy.LogTrace      : [8b8df55b] FruitsController.getFruitLogging() time=4ms
 ```
@@ -602,6 +602,7 @@ public class AppConfig {
     }
 }
 ```
+
 이는 LogTrace기능을 추가하려는 Bean마다 직접 Proxy객체를 생성해주어야 한다는 번거로움이 존재한다.
 
 <br>
@@ -774,7 +775,6 @@ public class InterfaceProxyConfig {
 
 이도 1번의 방법과 마찬가지로 Proxy객체를 하나하나 직접 생성해주어야 하며, 인터페이스가 존재하지 않는 경우라면 억지로 인터페이스를 생성해야하는 문제점이 존재한다.
 
-
 <br>
 
 ### 3. DynamicProxy
@@ -932,6 +932,7 @@ public class DynamicProxyFilterConfig {
     }
 }
 ```
+
 패턴매칭방법으로 spring AOP와 비슷한 기능을 흉내낼 수 있고, 1/2의 방법과 달리 이제는 Bean들마다 프록시 객체를 따로 정의해주지 않아도 되게 성능이 향상되었다!!
 
 하지만, Bean의 인터페이스가 존재하지 않다면 이 방법은 사용이 불가능하다는 단점이 존재한다. 이를 개선해보자.
@@ -1147,8 +1148,6 @@ public class AutoProxyConfig {
 
 표현식을 통해 디테일하게 필터링을 수행할 수 있게 되었으며, 생성한 advisor를 직접 빈 후처리기에 등록하지 않아도 런타임에 스프링이 등록한 advisor를 이용해 프록시객체를 생성해준다.
 
-
-
 <br>
 
 ### 7. AOP 어노테이션 (표현식으로 빈 등록)
@@ -1188,16 +1187,16 @@ public class LogTraceAspect {
     }
 }
 ```
+
 `@Aspect` 어노테이션을 클래스에 붙여줌으로써, 해당 클래스는 advise와 pointcut이 정의된 Advisor라고 명시해줄 수 있다.
 
 이렇게 코드를 수정함으로써, 흐름을 제어하는 곳과 이것을 사용하는 곳이 분리되지 않게 되어 역할을 더 명확히 명시해 줄 수 있게 되었다.
-
 
 <br>
 
 ### 8. AOP 어노테이션 (custom annotation을 통한 등록)
 
-7의 경우도 보면 아직 불편하다! 패키지가 많아질 수록, 제외하는 메서드가 많아질 수록 표현식이 길고 복잡해지게 되어 관리가 힘들어진다. 
+7의 경우도 보면 아직 불편하다! 패키지가 많아질 수록, 제외하는 메서드가 많아질 수록 표현식이 길고 복잡해지게 되어 관리가 힘들어진다.
 
 `@Transactional` 과 같이 어노테이션을 통하여 AOP기능을 적욯해보자.
 
@@ -1294,8 +1293,8 @@ public class AopConfig {
 
 <br>
 
-
 ### 9. 주의사항
+
 ```java
 @Controller
 @RequiredArgsConstructor
@@ -1319,6 +1318,7 @@ public class FruitController {
 }
 GET http://localhost:8080/v3/fruit?name=orange 호출시 200 응답
 ```
+
 만일, AOP가 적용되지 않는 클래스라면 따로 spring 이 프록시를 만들어 사용하지 않기 때문에 내부 메서드가 private이어도 상관없이 메서드 호출이 정상적으로 수행된다.
 
 ```java
@@ -1348,33 +1348,109 @@ public class FruitController {
 //
 GET http://localhost:8080/v3/fruit?name=orange 호출시 500에러
 FruitService 가 null
-//위의 경우
-
-
-//정상적인 경우
-//DEbug log 추적
-
 ```
 
-하지만 AOP가 적용되는 클래스(메서드 한개라도 pointcut에 해당한다면 적용)는 spring boot는 런타임에 cglib를 이용하여 프록시 객체를 만들어 호출하게 된다. 
+하지만 AOP가 적용되는 클래스(메서드 한개라도 pointcut에 해당한다면 적용)는 spring boot는 런타임에 cglib를 이용하여 프록시 객체를 만들어 호출하게 된다.
 
-이때, 일반적인 상황처럼 public 접근지정자라면 `cglib/FastClass`를 이용해 프록시 객체를 생성한다. ( 정확하진 않지만 이미 생성된 객체(컨테이너에 등록된 빈(의존성이 주입된 객체))를 이용해 빠르게 프록시객체를 생성하는 것 같다.) 
+이때 cglib의 특성이 Enhancer를 통해 구현객체를 상속하여 프록시 객체를 만들어낸다는 점이다. AOP가 지정된 메서드가 public이라면 Enhancer를 통해 객체를 만들고 실제 메서드 호출타이밍에 AdvisedInterceptor가 가로채서 MethodInvokation을 통해 `MethodProxy`가 호출된다. 최종적으로 MethodProxy의 invoke메서드에서 FastClass의 invoke메서드로 실제 로직이 실행된다. (이때 처음에 생성된 Enhancer 객체는 연관된 의존성이 하나도 주입이 되지 않은 형태이다. Enhancer특성상 동적으로 의존성을 주입해주기 힘들어 보이기 때문에 그런것이 아닐까 싶다..)
 
-하지만 private이라면, 프록시 객체에서 메서드 접근이 불가능 할 것이다. 그래서 Enhancer를 이용하여 프록시 객체를 만들어 사용하는데 이때 제대로 의존성 주입이 이루어지지 않는 문제가 발생한다.
+FastClass는 cglib에 있는 클래스로 MethodProxy가 생성될때 init메서드를 통해 FastClass가 생성된다. (FastClass도 일종의 프록시로 우리가 실제로 등록한 빈을 주입받아 생성되기 때문에 실제 빈을 통해 수행된다.(정상적으로 의존성주입이 된 빈)
 
-그래서 FruitService가 null이 발생한다.
+하지만 private이라면 Enhancer를 통해 프록시 객체를 만들고 이를 호출하는 타이밍에 메서드 정보를 알지 못하기 때문에 Interceptor가 가로채지 못하고 그대로 Enhancer객체로 프록시가 수행된다. (하지만 위에서 말했듯이 Enhancer는 의존성주입이 되지 않은 객체로 service가 null이 되어 null을 참조하려고해 null pointException이 발생한다.)
 
+<br>
+
+상속을 통해서 프록시 객체를 생성하기 때문에 private은 상속하지 못한다 했는데 어떻게 private 메서드가 호출이 된 것일까?
+
+우리는 인터페이스나 클래스의 계층관계를 정의할때 아래와같이 사용할 수 있다는 것을 알고 있다.
+
+```java
+ExInterface ex = new ExInterfaceImpl();
+ExSuperClass ex2 = new ExChildClass();
+```
+
+결국은 Super클래스로 업캐스팅을 수행하여 해당 obj로 invoke를 수행하기 때문에 private메서드가 수행될 수 있는 것이다. 한마디로, private메서드는 aop기능이 추가된 코드가 아닌 우리가 정의한 로직으로 수행이 된다.
+
+<br>
+
+그렇다면 의존성주입된 객체를 사용안하면 Proxy기능은 작동할까? 에러는 여전히 발생할까?
+
+```java
+@Custom
+@GetMapping("/v3")
+private ResponseEntity<String> get3(){
+    Method[] c = this.getClass().getDeclaredMethods();
+    return ResponseEntity.ok("1");
+}
+```
+
+마찬가지로 Enhancer로 동작하며 null point exception없이 정상적으로 응답하지만 AOP기능은 동작하지 않는다.
+
+또한 c의 값을 살펴보면 get3()의 정보는 없는 것을 볼 수 있는데, 이 부분이 재미있는 포인트이다. get3()를 통해 c가 생성되었지만 현재 클래스의 메서드에는 get3()의 정보가 없다.
+
+이유는 위에서 말했듯이 this는 Enhancer로 생성된 객체이기 때문에 get3()가 정의 되지 않아 c의 값에 없는 것이고 호출될 수 있었던 것은 부모클래스의 get3()를 통해 호출이 될 수 있었던 것이다.
+
+<br>
+
+<br>
 
 #### 정상적인 경우의 logtrace
+
 ![Fast](/구조/7주차-프록시/image/fastClass.PNG)
-FruitController$$FastClassBySpringCGLIB$$8f3c710b@6334에 param으로 FruitController 주입하여 메서드호출하는 방식으로 프록시 객체 생성
+최종적으로 `FruitController$$FastClassBySpringCGLIB$$8f3c710b@6334`에 param으로 FruitController 주입하여 메서드호출하는 방식으로 프록시 객체 생성
+
+아래의 MethodFroxy의 invoke메서드를 통해 실제 빈 호출
+
+```java
+//MethodProxy 중...
+
+public Object invoke(Object obj, Object[] args) throws Throwable {
+		try {
+			init(); //FastClass get
+			FastClassInfo fci = fastClassInfo;
+			return fci.f1.invoke(fci.i1, obj, args);
+		}
+        //catch문...
+}
+
+private void init() {
+    if (fastClassInfo == null) {  //fastClassInfo는 volataile로 여러 스레드에서 접근가능
+        synchronized (initLock) {
+            if (fastClassInfo == null) {
+                CreateInfo ci = createInfo;
+
+                FastClassInfo fci = new FastClassInfo();
+                fci.f1 = helper(ci, ci.c1);     //FastClass 생성
+                fci.f2 = helper(ci, ci.c2);
+                fci.i1 = fci.f1.getIndex(sig1);
+                fci.i2 = fci.f2.getIndex(sig2);
+                fastClassInfo = fci;
+                createInfo = null;
+            }
+        }
+    }
+}
+
+private static FastClass helper(CreateInfo ci, Class type) {
+		FastClass.Generator g = new FastClass.Generator();
+		g.setType(type);
+		// SPRING PATCH BEGIN
+		g.setContextClass(type);
+		// SPRING PATCH END
+		g.setClassLoader(ci.c2.getClassLoader());
+		g.setNamingPolicy(ci.namingPolicy);
+		g.setStrategy(ci.strategy);
+		g.setAttemptLoad(ci.attemptLoad);
+		return g.create();
+	}
+```
 
 #### private 경우 logtrace
+
 ![Enhancer](/구조/7주차-프록시/image/enhancer.PNG)
-Enhancer를 이용해 FruitController를 상속하는 방식으로 프록시 객체 생성
+Interceptor에 걸리지 못해 그대로 Enhancer의 프록시 객체로 로직을 수행하여 의존성주입이 이루어지지 않음.
 
-이는 트랜잭션, AOP, Secruity,Async 에서도 발생할 수 있는 에러로 알아두면 좋을 것 같다.
-
+이는 트랜잭션, AOP, Secruity,Async 에서도 발생할 수 있는 예외상황으로 알아두면 좋을 것 같다.
 
 <br><br><br>
 
