@@ -5,7 +5,7 @@
 모든 사람에게 일일히 물어보는 상황을 줄이기 위해서 **중간에 누가 한번에 알려주는 역할**만 하게끔 하는 패턴
 >
 
-[Untitle1](https://user-images.githubusercontent.com/32676275/150677907-484dae62-cddb-4530-9a99-d5df27ff69b6.png)
+![Untitle1](https://user-images.githubusercontent.com/32676275/150677907-484dae62-cddb-4530-9a99-d5df27ff69b6.png)
 
 ---
 
@@ -13,11 +13,11 @@
 
 현실 세계에서 **항공기 중재**를 **관제탑**에서 관리한다 하면, 모든 비행기가 자기 주변의 비행기를 교신하면서 이동한다면, 복잡하고 어떻게 이동해야할지 많이 혼란스럽겠지만. 굳이 그럴 필요 없이 **중재자**인 **관제탑**에서 모든 책임을 지고 각 비행기에 명령을 할당하면, 훨씬 편하게 이동할 수 있을 것이다.
 
-[Untitle2](https://user-images.githubusercontent.com/32676275/150677978-b10ba933-512e-4cc7-b984-b2474b1b0d2d.png)
+![Untitle2](https://user-images.githubusercontent.com/32676275/150677978-b10ba933-512e-4cc7-b984-b2474b1b0d2d.png)
 
 각 컴포넌트간의 의존성이 섞이는 경우가 존재하는데, 이런 경우를 방지하기 위해서는
 
-[Untitle3](https://user-images.githubusercontent.com/32676275/150678017-109296d1-ee6a-464b-b397-6fef06df3ec3.png)
+![Untitle3](https://user-images.githubusercontent.com/32676275/150678017-109296d1-ee6a-464b-b397-6fef06df3ec3.png)
 
 아예 모든 의존성을 Dialog에서 가지고 각 패턴마다 어떤 상황에 따라서 특정 행동을 할 수 있게끔 각 컴포넌트별로 이벤트를 전달하거나 값을 전달하는 방식으로 처리하면 훨씬 관리할 것들이 줄어서 편리하다.
 
