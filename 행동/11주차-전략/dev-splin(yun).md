@@ -15,6 +15,7 @@
 - `Strategy` : 다양한 전략들을 하나로 추상화 시킨 인터페이스
 - `ConcreteStrategy` : `Startegy` 인터페이스를 구현한 전략 클래스
   - 클라이언트가 직접 사용할 전략 클래스를 정할 수 있음
+  - **ConcreteStrategy는 오타인 것 같습니다.**
 
 
 
@@ -64,15 +65,13 @@ public class Data {
 ```java
 public class Blog {
     private Data data;
-    private Theme theme;
 
-    public Blog(Data data, Theme theme) {
+    public Blog(Data data) {
         this.data = data;
-        this.theme = theme;
     }
 
     public void write(String content) {
-        theme.apply();
+        System.out.println("===== 기본 테마 =====");
         System.out.printf("이름 : %s\n", data.getName());
         System.out.printf("전화번호 : %s\n", data.getCell());
         System.out.printf("이메일 : %s\n", data.getEmail());
@@ -94,6 +93,15 @@ public class Client {
         blog.write("내용1");
     }
 }
+```
+
+```java
+// 출력 결과
+===== 기본 테마 =====
+이름 : splin
+전화번호 : 010-1234-5678
+이메일 : dev.splin@gmail.com
+내용 : 내용1
 ```
 
 만약 기존 코드에서 블로그 테마를 변경하고 싶다면 `Blog`의 `write` 함수를 바꿔주어야 하는데, 이는 객체 지향 설계 원칙인 `SOLID` 의 `개방 폐쇄 원칙(OCP)`을 위배하게 됩니다.
@@ -174,6 +182,10 @@ public class Blog {
         System.out.printf("전화번호 : %s\n", data.getCell());
         System.out.printf("이메일 : %s\n", data.getEmail());
         System.out.printf("내용 : %s\n", content);
+    }
+    
+    public void changeTheme(Theme theme) {
+        this.theme = theme;
     }
 }
 
@@ -357,7 +369,7 @@ public class Client {
 
 ## 5. 마치며...
 
-전략패턴을 공부하면서 커맨트 패턴, 상태 패턴과 비슷하다고 생각했습니다. 그래서 차이점을 한 번 알아보았는데, 
+전략패턴을 공부하면서 커맨드 패턴, 상태 패턴과 비슷하다고 생각했습니다. 그래서 차이점을 한 번 알아보았는데, 
 
 `패턴을 구분할 때는 생김새로 구분하는 것이 아니라, 목적으로 구분해야 한다.`
 
