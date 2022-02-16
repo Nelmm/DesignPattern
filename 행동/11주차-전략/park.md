@@ -4,8 +4,6 @@
 
 컨텍스트에서 사용할 알고리즘을 클라이언트가 선택한다.
 
-![strategy_01](https://user-images.githubusercontent.com/42997924/153322763-48eeb4e5-de32-43eb-b0e1-b334baf2b8c7.png)
-
 어떤 일을 수행하는 방법이 여러가지 일 때, 여러 알고리즘을 각각의 개별적인 클래스로 캡슐화하고, 캡슐화된 것을 공통된 인터페이스로 추상화한다. 
 
 로직을 사용하는 곳에서는 추상화된 인터페이스만 사용함으로써 코드는 바뀌지 않지만 사용하는 알고리즘을 바꿔 끼울 수 있도록 해주는 패턴.
@@ -69,6 +67,8 @@ public class Client {
 
 
 **구조**
+
+![strategy_01](https://user-images.githubusercontent.com/42997924/154192846-bff0a3a2-9dc3-4ec4-b8f5-08e1881bbaca.png)
 
 * Context
 
