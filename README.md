@@ -90,7 +90,7 @@
         </tr>
         <tr>
             <td rowspan=2>6주차</td>
-            <td rowspan=2>의섭</td>
+            <td rowspan=2>의성</td>
             <td>퍼사드 패턴</td>
             <td>창섭-재우</td>
         </tr>
