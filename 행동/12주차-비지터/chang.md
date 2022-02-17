@@ -29,11 +29,11 @@
 원래 방식대로 하면 Shape가 우선되서 실제 Shape interface의 메소드인 exporting Shape가 나온다.
 
 ```java
-class Exporter{ //visitor로만 구현하면.. 
-    method export(s: Shape)
-        print("Exporting shape")
-    method export(d: Dot)
-      print("Exporting dot")
+class Node{ //visitor로만 구현하면.. 
+    method export(s: City)
+        print("Exporting City")
+    method export(d: Industry)
+      print("Exporting Industry")
 }
 
 foreach (Node node in graph) 
@@ -99,7 +99,11 @@ public class Dot implements Shape {
 
 - visitor 패턴은 command 패턴의 강력한 버전임. 이객체가 서로 다른 클래스의 다양한 객체를 실행시킬수 있음.
 - 전체 composite 트리를 실행하는데 visitor를 사용할 수 있음.
-- iterator와 함께 복잡한 데이터구조를 순회하는데 visitor패턴을 사용할 수 있는데, 모든 클래스가 다 다르더라도 그안의 있는 파일들을 실행하면서,
+- iterator와 함께 복잡한 데이터구조를 순회하는데 visitor패턴을 사용할 수 있는데, 모든 클래스가 다 다르더라도 그안의 있는 파일들을 실행하면서, visitor 패턴을 사용할 수 있음. 
+
+
+
+> 개인적인 생각이지만, iterator, composite 패턴의 도움을 주는 패턴으로써 visitor패턴이 사용되는 것 같다. command패턴의 경우 상위 개념으로 봐도 좋지 않을까 싶다.
 
 ## 어디서 사용하는지?
 
