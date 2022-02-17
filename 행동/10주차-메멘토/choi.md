@@ -1,19 +1,15 @@
-# 메멘토(Memento) 패턴
+# 메멘토 패턴
 
-메멘토 패턴은 **캡슐화를 유지하면서 객체 내부 상태를 외부에 저장하는 패턴**입니다.
+> `캡슐화`를 유지하면서 객체 내부 상태를 외부에 저장하는 방법
+>
 
-## 1. 다이어그램
+![Untitled](https://user-images.githubusercontent.com/32676275/151112064-eae9dec5-f841-4ee5-b20a-b87a3af58775.png)
 
-![memento](https://user-images.githubusercontent.com/79291114/151184142-6a60b443-3ba4-4eea-855a-981aaa82d9fd.PNG)
+ 객체의 데이터를 `CareTaker` 에 저장하고 필요할 때 데이터를 이용해 원본 객체를 만드는 패턴
 
-- `Originator` : 객체의 정보를 가지고 있는 오리지널 객체
-  - 제 3자가 객체 내부 정보를 알지 못하게 하기 위하여 **Memento를 만들 수 있는 메서드가 필요**함
-- `Memento` : 오리지널 객체의 정보를 담는 불변 객체
-- `CareTaker` : 오리지널이 반환한 **Memento를 가지고 있다가 필요할 때 Memento의 값을 Originator에게 전달**함
-  
-  
+---
 
-### 2. 예제
+### 예제
 
 ```java
 //캐릭터 객체
@@ -35,7 +31,7 @@ public class Character {
     }
 
     public static Character restore(CharacterMemento characterMemento) {
-                //Memento 객체를 통해 새로운 Character 생성
+				//Memento 객체를 통해 새로운 Character 생성
         return new Character(characterMemento.getName(), characterMemento.getLevel(), characterMemento.getJob());
     }
 }
@@ -104,28 +100,16 @@ public class GameClient {
 }
 ```
 
-## 3. 장점과 단점
-
-메멘토 패턴의 장점과 단점은 아래와 같습니다.
-
-### 3-1. 장점
-
-- 캡슐화를 지키면서 상태 객체 상태 스냅샷을 만들 수 있습니다.
-  
-  - `스냅샷` : 객체의 특정 시점의 데이터를 저장해 놓는 것
-
-- 객체 상태 저장하고 또는 복원하는 역할을 CareTaker에게 위임할 수 있습니다.
-
-- 객체 상태가 바뀌어도 클라이언트 코드는 변경되지 않습니다.
-
-### 3-2. 단점
-
-- 많은 정보를 저장하는 Mementor를 자주 생성하는 경우 메모리 사용량에 많은 영향을 줄 수 있습니다.
-
-## 4. 마치며...
-
-메멘토 패턴은 객체의 특정 시점 상태를 저장할 수 있는데, 이 때, 객체와 거의 동일한 메멘토 객체를 만들기 때문에 객체의 크기가 커질수록 메모리 사용량에 영향을 줄 확률이 높아지므로 상황에 따라 적절히 사용할 수 있어야 합니다.
-
 ---
 
-참고 : [코딩으로 학습하는 GoF의 디자인 패턴](https://www.inflearn.com/course/%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4/dashboard)
+### 장/단점
+
+> 장점
+>
+1.  저장된 상태를 핵심 객체와는 다른 별도의 객체에 보관하기 때문에 안전하다.
+2.  핵심 객체의 데이터를 계속해서 캡슐화된 상태로 유지할 수 있다.
+3.  복구 기능을 구현하기 쉽다.
+
+> 단점
+>
+1. 상태를 저장하고 복구하는 데 시간이 오래 걸리 수 있다는 단점이 있다.
