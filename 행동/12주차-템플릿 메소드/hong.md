@@ -8,7 +8,6 @@
 
 ## Go 코드
 ```go
-//
 type Operator interface {
     GetResult(result,number int) int
 }
@@ -55,16 +54,6 @@ func main(){
 
 ## 템플릿 콜백
 ```go
-type Operator interface {
-    GetResult(result,number int) int
-}
-type AddOperator struct {}
-func (ao AddOperator)GetResult(result,number int) int {
-    return result + number
-}
-
-
-//템플릿 메서드
 type FileProcessor struct {
     path     string
 }
