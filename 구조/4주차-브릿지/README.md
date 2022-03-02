@@ -212,23 +212,23 @@ public class Client {
 > 시스템 설계
 > 
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/44e564f9-3dfa-4ba4-9661-f189e4cb058c/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054500Z&X-Amz-Expires=86400&X-Amz-Signature=ec899d16d5364b1a4b1764b946152a2cd1000c5594bd6f2f9ded1db0a2955de7&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![Untitled](https://user-images.githubusercontent.com/32676275/156380812-9ac634c7-da6b-4cb8-8bff-c38dfeae0e42.png)
 
 > Slf4j
 > 
 
 `Logger`: 추상화. 내부적인 메소드는 그대로 사용하면 되며, 실제로 내부에 로그 라이브러리만 갈아 끼우면 된다. (`log4j2`, `log4j`, `logback`와 같이 내부를 갈아 끼우면 되는 방식)
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/a105e226-25dd-4f61-8b3a-229e477b7af6/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054518Z&X-Amz-Expires=86400&X-Amz-Signature=47f9d3a1d097c2723259b9716f72ea11aae173591d8f68b0207a8a1d85d1ff0a&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![Untitled](https://user-images.githubusercontent.com/32676275/156380830-68e19ef6-e47f-462c-be2d-52ad9b8088b0.png)
 
 → 이런식으로 `Slf4J`를 가장 먼저 두면서 ⇒ 다른 `log`라이브러리를 사용하면, 사용성은 유지하되, 다른 새로운 라이브러리로 대체 가능하게 만들 수 있다.
 
 > Java List Interface
 > 
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/05a0dbe6-886d-4915-8f82-f1fd785da0c7/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054558Z&X-Amz-Expires=86400&X-Amz-Signature=4703adca2f3d7350dcb8c0b63f232b4aeeea2b702a88377b400d493ed9304463&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![Untitled](https://user-images.githubusercontent.com/32676275/156380859-34d13bdc-8ad5-46a0-a8e6-274ab5cc32c6.png)
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/7ff36831-acc5-4039-8db7-ea4abdba0619/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054612Z&X-Amz-Expires=86400&X-Amz-Signature=70f16585328574ea28b416d4c19ad63a71360feeb8db0f2d53264b0c9ee08930&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![Untitled](https://user-images.githubusercontent.com/32676275/156380875-6f173981-3bbe-43ad-9dbb-3bb1ffe795cd.png)
 
 ```java
 public void list() {
