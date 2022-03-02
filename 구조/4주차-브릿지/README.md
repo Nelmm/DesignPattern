@@ -5,7 +5,7 @@
 > `추상`적인 것과 `구체`적인 것을 **분리**하여 연결하는 패턴
 > 
 
-![Untitled](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/02bdd91c-c74b-4d81-b649-9dfc832a803f/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20211220%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20211220T054417Z&X-Amz-Expires=86400&X-Amz-Signature=b284d32a504aafc79b67065bf478c1443774a87f610f8a7a2917ca6066ac8fc8&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject)
+![Untitled](https://user-images.githubusercontent.com/32676275/156380633-f3ad429f-ecb7-4fb2-ab05-f0e2ef3da927.png)
 
 `Abstraction` : 기능 계층의 최상위 클래스이며 추상 인터페이스
 
