@@ -1,0 +1,281 @@
+# 싱글톤 패턴 예제
+
+예제 요구사항
+
+- 사람인의 MUST 상품을 이용하는 기업을 관리(추가, 삭제, 적용 여부)
+- MUST 구매 기업 리스트를 볼 수 있음
+
+> **이른 초기화(Eager Initialization)**
+> 
+
+```java
+/**
+ * MUST 관리 클래스
+ */
+public class MustManage {
+    
+    //MUST 객체를 static을 사용해 생성함으로써 클래스 로더 시점에 메모리 등록
+    private static final MustManage INSTANCE = new MustManage();
+    
+    //MUST 구매 기업을 저장하기 위한 Set 저장소
+    private final Set<String> company = new HashSet<>();
+    
+    //사용자가 마음대로 객체를 생성하지 못하게 막기 위해 private 선언
+    private MustManage() {}
+    
+    //싱글톤 객체 얻기
+    public static MustManage getInstance() {
+        return INSTANCE;
+    }
+    
+    /**
+     * 기업 MUST 적용
+     */
+    public void addCompany(String companyNm) {
+        //이미 구매한 기업인지 체크
+        if(this.company.contains(companyNm)) {
+            System.out.println(companyNm + " 기업은 이미 MUST 적용중입니다.");
+            return;
+        }
+        
+        //기업 추가
+        this.company.add(companyNm);
+    }
+    
+    /**
+     * 기업 MUST 제거
+     */
+    public void removeCompany(String companyNm) {
+        //기업이 존재하지 않으면
+        if(!this.company.contains(companyNm)) {
+            System.out.println(companyNm + " 기업은 MUST가 적용되지 않았습니다.");
+            return;
+        }
+        
+        //제거
+        this.company.remove(companyNm);
+    }
+    
+    /**
+     * MUST 적용중인 기업 출력
+     */
+    public void print() {
+        System.out.println("-----------MUST 적용 기업----------");
+        //모든 기업 출력
+        for (String s : this.company) {
+            System.out.println(s);
+        }
+        System.out.println("---------------------------------");
+    }
+}
+
+/**
+ * Main 실행
+ */
+public class Main {
+    public static void main(String[] args) {
+        //싱글톤으로 이미 생성된 객체 가져옴
+        MustManage mustManage = MustManage.getInstance();
+        //기업 추가
+        mustManage.addCompany("사람인");
+        //기업 추가
+        mustManage.addCompany("점핏");
+        //출력
+        mustManage.print();
+        //기업 제거
+        mustManage.removeCompany("점핏");
+        //출력
+        mustManage.print();
+        //이미 적용중인 기업 추가
+        mustManage.addCompany("사람인");
+        //적용중이지 않은 기업 제거
+        mustManage.removeCompany("점핏");
+
+        //다른 객체
+        MustManage mustManage2 = MustManage.getInstance();
+        //출력
+        mustManage2.print();
+    }
+}
+
+//결과
+-----------MUST 적용 기업----------
+사람인
+점핏
+---------------------------------
+-----------MUST 적용 기업----------
+사람인
+---------------------------------
+사람인 기업은 이미 MUST 적용중입니다.
+점핏 기업은 MUST가 적용되지 않았습니다.
+-----------MUST 적용 기업----------
+사람인
+---------------------------------
+```
+
+**이른 초기화(Eagar Initialization)**는 `static`을 이용해 컴파일 시점에 인스턴스를 메모리에 적재하는 `정적 바인딩(Static Binding)` 을 사용하는 방법입니다.
+
+- 장점
+    - 컴파일 시점에 인스턴스를 미리 적재하기 때문에 Thread-Safe
+    - 미리 만들어두기 때문에 실제 인스턴스를 사용하지 않아도 메모리를 차지
+
+> **늦은 초기화(Lazy Initialization)**
+> 
+
+```java
+/**
+ * MUST 관리 클래스
+ */
+public class MustManage {
+
+    //MUST 객체 처음에는 NULL 상태
+    private static MustManage INSTANCE;
+
+    //싱글톤 객체 얻기
+    public static MustManage getInstance() {
+        //INSTANCE가 NULL인 경우 객체 생성
+				if (INSTANCE == null) {
+            INSTANCE = new MustManage();
+        }
+        return INSTANCE;
+    }
+		
+		(...위 예제와 동일)
+}
+```
+
+**늦은 초기화(Lazy Initialization)**는 실제 해당 객체가 사용될 때(`getInstance()` 호출) 생성하는 방법입니다. `동적 바인딩(Dynamic Binding)`
+
+하지만 위 코드는 아래처럼 동기화를 보장하지 않을 수 있습니다.
+
+```java
+Thread A : if(INSTANCE == null) 수행 결과 true
+Thread B : if(INSTANCE == null) 수행 결과 true
+
+Thread A : INSTANCE = new MustManage() 수행으로 인스턴스1 생성
+Thread B : INSTANCE = new MustManage() 수행으로 인스턴스2 생성
+```
+
+- 장점
+    - 이른 초기화 방법보다 메모리 측면에서 효율(사용할 때 생성 하기 때문)
+- 단점
+    - Thread-Safe X
+
+> **늦은 초기화, 동기화 처리(Lazy Initialization with synchronized)**
+> 
+
+```java
+/**
+ * MUST 관리 클래스
+ */
+public class MustManage {
+
+    //MUST 객체
+    private static MustManage INSTANCE;
+
+    //synchronized 키워드를 사용
+    public static synchronized MustManage getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new MustManage();
+        }
+        return INSTANCE;
+    }
+}
+```
+
+`synchronized` 키워드를 사용하면 동기화를 가능하게하여 `Thread-Safe` 처리를 할 수 있습니다.
+하지만 `getInstance()` 호출될 때 마다 동기화 작업이 이루어지기에 성능 하락이 발생할 수 있습니다.
+
+- 장점
+    - 메모리 효율적 사용
+    - thread-safe
+- 단점
+    - 인스턴스 생성 여부와 상관없는(`getInstacne()` 호출할 때마다) 동기화로 인한 성능 하락
+    
+
+> **늦은 초기화, DCL(Lazy Initialization. Double Checked Locking)**
+> 
+
+```java
+/**
+ * MUST 관리 클래스
+ */
+public class MustManage {
+
+    //volatile 키워드 사용
+    private volatile static MustManage INSTANCE;
+
+    //싱글톤 객체 얻기
+    public static MustManage getInstance() {
+        //객체 존재여부를 먼저 체크
+				if (INSTANCE == null) {
+						//synchronized를 이용한 동기화 객체 생성
+            synchronized (MustManage.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new MustManage();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+}
+```
+
+이 방법은 위의 동기화 방식을 개선한 작업으로 객체 존재 여부를 먼저 체크해 무조건 `동기화 블록(synchronized)`로 넘어가지 않게 한 방법입니다.
+
+이 방법을 사용할 때는 객체 변수에 `volatile` 키워드를 사용해줘야합니다.
+
+`volatile` 키워드를 사용하면 CPU메모리 영역에 캐싱된 값이 아니라 항상 최신의 값을 가지도록 메인 메모리 영역에서 값을 참조합니다.
+
+그리고 컴파일 단계에서 `재배치(reordering)`를 방지해주는 기능이 있는데 쉽게 말하면 아래처럼 객체를 생성하는 코드가 있다고 했을 때
+
+```java
+INSTANCE = new MustManage();
+```
+
+처리 되는 순서는
+
+1. `MustManage` 인스턴스 생성
+2. `INSTANCE`에 인스턴스 주소 값 대입
+
+이렇게 진행될텐데 컴파일러가 최적화에 따라 코드가 재배치 되서 아래처럼 순서가 반대로 될 수 있습니다.
+
+1. `INSTANCE`에 인스턴스 주소 값 대입
+2. `MustManage` 인스턴스 생성
+
+이렇게 될 경우 여러개의 스레드가 들어왔을 때 **`INSTANCE`에 주소 값이 대입됐지만 인스턴스가 생성되지 않았을 때** 다른 스레드에서는 `null`이 아니기 때문에 정상적으로 다른 작업을 처리할 때 문제가 생길 수 있습니다.
+
+- 장점
+    - 메모리 효율
+    - Thread-Safe
+    - synchronized 키워드로 인한 성능 감소 해결
+    
+
+> **LazyHolder - 늦은 초기화, Static Inner class사용**
+> 
+
+```java
+/**
+ * MUST 관리 클래스
+ */
+public class MustManage {
+		//내부 클래스를 사용하여 
+    private static final class MustManageHolder {
+				//내부클래스에 static 객체 생성
+        private static final MustManage INSTANCE = new MustManage();
+    }
+
+    //싱글톤 객체 얻기
+    public static MustManage getInstance() {
+				//내부클래스의 객체 가져오기
+        return MustManageHolder.INSTANCE;
+    }
+```
+
+위 코드는  `Inner Static Class MustManageHolder`  를 선언하여 객체를 가져오는 방법이다.
+
+`Inner Static Class`는 해당 클래스를 사용할 때 초기화가 진행된다. 즉 `getInstance()` 가 호출 될 때 인스턴스가 메모리에 적재되기 때문에 늦은 초기화가 가능하다. 또한 클래스가 초기화하는 시점에는 `Thread-Safe`를 보장한다. 
+
+다시 말해 `INSTANCE = new MustManage()` 구문은 클래스 초기화 시점에 호출되기에 한번만 호출된다.
+
+이 방식은 구현도 쉽고 `메모리 효율`, `Thread-Safe`를 모두 만족하기에 싱글톤 패턴을 적용할 때 가장 많이 사용하는 방식이다.
