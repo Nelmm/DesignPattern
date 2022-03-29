@@ -1452,6 +1452,34 @@ Interceptor에 걸리지 못해 그대로 Enhancer의 프록시 객체로 로직
 
 이는 트랜잭션, AOP, Secruity,Async 에서도 발생할 수 있는 예외상황으로 알아두면 좋을 것 같다.
 
+
+### 22/03/29 추가 정리
+```
+private:
+DispatcherServlet->InvocableHandlerMethod.doInvoke()-> proxy class ->...
+
+public:
+DispatcherServlet->InvocableHandlerMethod.doInvoke()-> proxy class ->public perform AOP->CglibAopProxy.invokeJoinpoint()-> obtain bean attribute ->..
+```
+Controller의 private 메서드가 호출될 수 있는 것은 reflection을 이용해 메소드를 호출하기 때문에 호출이 될 수 있다.
+
+cglib를 이용하는 AOP가 적용된 클래스라면 private메서드는 호출 될까?
+- aop가 적용하려고 한다면 적용이 되지 않고 원본 메서드가 사용된다.
+- aop가 적용되지 않는 그냥 method 라면 위와 같이 정상적으로 로직이 수행이 가능하다.
+  - 특정 메서드의 AOP적용 유무와 상관없이 클래스가 Enhancer대상이라면 Enhancer를 통해 메서드 수행
+  - cglib는 상속을 이용하기에 public 메서드만 재정의하여 사용되기 때문에 private 메서드는 원본 메서드가 사용된다고 이해할 수 있다.
+  - 하지만, logtrace를 보면 실행주체는 Enhancer객체이다. 어떻게 Enhancer에서 없는 private메서드를 실행할까?
+    - Enhancer는 프록시객체의 SuperClass를 reflection으로 private메서드도 실행이 Enhancer에서 가능하다.
+
+만일, private 메서드에서 의존성이 주입된 객체를 사용하려고하면 null이 주입되어 사용된다. 그 이유는?
+- 만일 public 메서드라면 AOP기능을 수행후 실제 target메서드를 수행하기때문에 의존성이 주입된 실제 빈으로 로직을 정상적으로 수행.
+- private 메서드라면 호출은 되지만 의존성 객체가 null이 되어 NullPointException이 발생할 수 있다.
+  - AOP가 적용되는 메서드라면 실제 target을 통해 메서드가 수행될테지만 적용되지 않는 객체라면 실제 메서드가 빈에서 수행되는 것이 아니라 Enhancer객체에서 로직이 수행된다.
+    - Enhancer는 Proxy객체로 상태를 가지고 있지 않기 때문에 의존성주입된 객체가 null이 되어 발생하는 문제이다.
+
+
+
+
 <br><br><br>
 
 ### Reference
