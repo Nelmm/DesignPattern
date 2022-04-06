@@ -1,12 +1,43 @@
->  정리 : [영준](https://github.com/jun108059)
+**목차**
 
-# 프록시
+- [1. 프록시 패턴의 설계 절차](#1-프록시-패턴의-설계-절차)
+- [2. 코드로 알아보는 프록시 패턴](#2-코드로-알아보는-프록시-패턴)
+- [3. 적용할 수 있는 곳](#3-적용할-수-있는-곳)
+- [4. 다른 패턴들과 비교](#4-다른-패턴들과-비교)
+- [5. 장단점](#5-장단점)
+- [6. Java, Spring 적용 사례](#6-java--spring-적용-사례)
+  * [6-1. 자바](#6-1-자바)
+  * [6-2. 스프링](#6-2-스프링)
+- [7. Spring 코드에 프록시로 기존 코드 확장하기](#7-spring-코드에-프록시로-기존-코드-확장하기)
+  * [7-1. Concrete Proxy](#7-1-concrete-proxy)
+  * [7-2. Interface Proxy](#7-2-interface-proxy)
+  * [7-3. DynamicProxy](#7-3-dynamicproxy)
+  * [7-4. ProxyFactory](#7-4-proxyfactory)
+  * [7-5. postProcessor](#7-5-postprocessor)
+  * [7-6. AutoProxy](#7-6-autoproxy)
+  * [7-7. AOP 어노테이션 (표현식으로 빈 등록)](#7-7-aop--어노테이션-표현식으로-빈-등록-)
+  * [7-8. AOP 어노테이션 (custom annotation을 통한 등록)](#7-8-aop-어노테이션--custom-annotation을-통한-등록-)
+  * [7-9. 주의사항](#7-9-주의사항)
+- [8.추가 궁금증(다이나믹 리플렉션과 CGLib)](#8-추가-궁금증-다이나믹-리플렉션과-cglib-)
+  * [8-1. 다이나믹 리플렉션](#8-1-다이나믹-리플렉션)
+  * [8-2. CGLibrary 리플렉션](#8-2-cglibrary-리플렉션)
 
-어떤 객체에 대한 대리자를 통해 접근을 제어하여 객체의 생성을 지연초기화 하거나, 캐싱, 객체의 행동 전후에 행동제어를 수행할 수 있는 패턴
+# 프록시 패턴
 
-<br>
+프록시(Proxy)는 직역하면 '대리자', ' 대변인'이라는 의미이다. 소프트웨어에서도 어떤 기능(일)을 대신할 수 있는 역할이다.
 
-## 1. 코드
+특정 객체를 사용하고자 할 때, 직접 접근하지 않고 프록시라는 대리인을 통해 접근하여 사용하는 방식이다.
+
+## 1. 프록시 패턴의 설계 절차
+
+1. interface로 메소드 설계
+2. RealSubject를 인터페이스를 받아 implements로 구현.
+3. Proxy 역시 인터페이스 받아서 구현함.
+4. RealSubject를 주입받아서, 리얼 서비스 자체를 변수로 받아서 처리하기
+
+부가적인 일을 Proxy가 대신해서 처리할 수 있다. (메소드 직전에 앞뒤로 로깅한다던가... Real Object가 주입이 되었는지 확인도 가능함)
+
+## 2. 코드로 알아보는 프록시 패턴
 
 ```java
 public class FruitRepository{
@@ -36,22 +67,16 @@ public class FruitController {
 }
 ```
 
-아주 단순하게 구현하기 위해 map을 통한 데이터 접근을 구현하며 이는 db를 대체한다고 하자. 
-
-이런 객체를 controller에서 이용하여 데이터를 조회하는 프로그램이다. 
-
-그런데 조회할 때 같은 과일 이름의 조회 결과는 캐싱을 추가하려고 한다. 
-
-그러면 아래와 같이 코드를 작성할 수 있을 것이다.
+아주 단순하게 구현하기 위해 map을 통한 데이터 접근을 구현하며 이를 db를 대체한다고 하자. 이런 객체를 controller에서 이용하여 데이터를 조회하는 프로그램이 있다고하자. 그런데 조회할때 같은 과일이름의 조회결과는 캐싱을 추가하려고 한다. 그러면 아래와 같이 코드를 작성할 수 있을 것이다.
 
 ```java
 @Repository
 public class FruitRepository {
     private static final Map<String, Fruit> cachedFruitName = new HashMap<>();
     private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
-            "orange", new Fruit("orange", 10000),
+            "orange",new Fruit("orange",10000),
             "strawberry", new Fruit("strawberry", 20000),
-            "mango", new Fruit("mango", 30000)
+            "mango", new Fruit("mango",30000)
     ));
 
     @Override
@@ -63,18 +88,17 @@ public class FruitRepository {
 }
 ```
 
-그런데 만약 Repository가 우리가 구현한 객체가 아닌 경우, 수정이 불가능하다면 지금과 같이 캐싱을 직접 적용하는 것이 불가능하다. 
-
-이를 프록시를 통해 해결해보자.
+그런데 만약 Repository가 우리가 구현한 객체가 아니라 수정이 불가능하다면 캐싱을 이렇게 직접 적용이 불가능 할 것이다. 이를 프록시를 통해 해결해보자.
 
 ```java
 public class FruitRepository{
     private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
-            "orange", new Fruit("orange", 10000),
+            "orange",new Fruit("orange",10000),
             "strawberry", new Fruit("strawberry", 20000),
-            "mango", new Fruit("mango", 30000)
+            "mango", new Fruit("mango",30000)
     ));
-    
+
+
     public Fruit getFruitByName(String name) {
         System.out.println("Repository에서 과일 조회");
         return fruitList.getOrDefault(name,null);
@@ -109,7 +133,7 @@ public class FruitController {
 
 자식클래스는 부모클래스로 업캐스팅이 될 수 있다는 점을 이용하여 위와 같이 프록시를 구현할 수 있다.
 
-만일 Repository를 수정할 수 있어서 Interface를 구현하도록 만들 수 있다면 아래와 같이 구현할 수도 있다.
+만일 Repository를 수정할 수 있어 Interface를 구현하도록 만들 수 있다면 아래와 같이 구현을 할 수도 있다.
 
 ```java
 public interface FruitRepositoryInterface {
@@ -118,15 +142,15 @@ public interface FruitRepositoryInterface {
 
 public class FruitRepository implements FruitRepositoryInterface{
     private static final Map<String, Fruit> fruitList = new HashMap<>(Map.of(
-            "orange", new Fruit("orange", 10000),
+            "orange",new Fruit("orange",10000),
             "strawberry", new Fruit("strawberry", 20000),
-            "mango", new Fruit("mango", 30000)
+            "mango", new Fruit("mango",30000)
     ));
 
 
     public Fruit getFruitByName(String name) {
         System.out.println("Repository에서 과일 조회");
-        return fruitList.getOrDefault(name, null);
+        return fruitList.getOrDefault(name,null);
     }
 }
 @Repository
@@ -158,31 +182,108 @@ public class FruitController {
 }
 ```
 
-<br><br>
+## 3. 적용할 수 있는 곳
 
-## 2. 적용할 수 있는 곳
-
-- 지연 초기화 : 시스템 리소스를 많이 차지하는 서비스 객체가 존재할 때 앱이 시작되는 시점에 객체를 생성하는 것이 아니라 실제로 사용하는 시점에 사용하도록 하여 성능향상을 꾀하고자 할 때
+- 지연 초기화 : 시스템 리소스를 많이 차지하는 서비스 객체가 존재할때 앱이 시작되는 시점에 객체를 생성하는 것이 아니라 실제로 사용하는 시점에 사용하도록하여 성능향상을 꾀하고자 할때
 - 접근 제어 : 특정 클라이언트만 서비스 객체를 사용할 수 있도록 하려는 경우
 - 로깅 요청 : 실제 서비스 객체에 요청을 전달하기 전에 제어할 수 있다는 점을 이용하여 요청을 로깅하려고 하는 경우
-- 캐싱 : 서비스 로직을 통한 반환 값이 일정하며 처리시간이 긴 경우에 결과를 캐시하고 캐시의 수명주기를 관리하고자 하는 경우
+- 캐싱 : 서비스 로직을 통한 반환값이 일정하며 처리시간이 긴 경우에 결과를 캐시하고 캐시의 수명주기를 관리하고자 하는 경우
 - 자원 해제 : File, datasource등 자원을 해제하지 않으면 많은 리소스를 잡아먹는 객체의 경우 자원해제를 사용자가 아닌 프록시객체에게 위임하고자 하는 경우
 
-<br><br>
+> 특정 객체에 대한 접근을 제어하거나 기능을 추가할 수 있다.
 
-## 3. 다른 패턴들과 비교
+## 4. 다른 패턴들과 비교
 
 - Adapter : 랩핑된 객체와 다른 인터페이스를 제공하지만, 프록시는 동일한 인터페이스를 제공한다.
 - Facade : 객체를 버퍼링하고 자체적으로 초기화한다는 점은 비슷하지만 프록시는 해당 서비스 객체와 동일한 인터페이스를 갖는다.
 - Decorator : 구조가 매우 비슷하며 특정 작업을 다른 객체에게 위임하는 점은 비슷하나 프록시는 객체 자체적으로 서비스 객체의 수명주기, 행동을 관리하지만 데코레이터는 행동의 제어가 클라이언트에게 있다.
   데코레이터는 `런타임`에 `기능을 추가`하는 것이 목적, Proxy는 `컴파일 타임`에 `행동을 제어` 하는 것이 목적
 
-<br><br><br>
+## 5. 장단점
 
-## 4. Spring 프로젝트에 프록시를 통해 서비스를 확장해보자!
+장점
+
+- 기존 코드 변경없이 새로운 기능 추가 가능
+- 기존 코드가 해야하는 일만 유지 가능.
+- 기능 추가 및 초기화 지연 등으로 다양하게 활용 가능.
+
+단점
+
+- 코드 복잡도 증가
+
+## 6. Java, Spring 적용 사례
+
+### 6-1. 자바
+
+- 다이나믹 프록시, 리플렉션
+
+invocationHandler을 통해서 invoke 메소드를 통해서 클래스 로드하고, 클래스를 받아서, 프록시 방식으로 적용해준다.
+
+### 6-2. 스프링
+
+**AOP**
+
+Aspect를 적용하면, → 내부적으로 다이나믹 프록시를 사용해서 동적으로 프록시 빈을 만듬. 프록시 빈을 인터페이스로
+
+CGLibray를 통해 가짜객체로 감싸고 사용하게 됨.  ⇒ 진짜 객체를 사용해서 덮어 씌우는 방식으로 이용되어진다.
+
+`@Transactional`, `@Cachable`과 같은 것들이 모두 AOP를 통해서 구현되어진 방식이다.
+
+**JPA**
+
+JPA도 Proxy방식으로 구성되어있는데, 개인적으로 JPA에서 `@NoArgsConstructor` 방식으로 Entity를 구성해야하는 이유가 상당히 궁금했었는데 그 이유가 이 프록시 패턴을 사용하면 위에서 말했었던, 여러가지 이점들을 누릴 수 있기 때문에 사용했던 것이라고 생각했고, 좀 찾아봤다.
+
+JPA에서 이 프록시를 사용하는 방식은 다음과 같은데,
+
+![](https://github.com/namjunemy/TIL/blob/master/Jpa/inflearn/img/31_proxy.PNG?raw=true)
+
+DB 조회 전 MemberProxy에서 일단 기본적으로 비어있는 기본 생성자를 구성해서 구현하는 방식을 취하되, 초기화 요청이 오는 경우 이 생성한 기본 생성자를 받고, 그 안에 넣은 후 이 맴버를 실제로 구현하는 방식이라고 생각하는데...
+
+[java - Why does JPA require a no-arg constructor for domain objects? - Stack Overflow](https://stackoverflow.com/questions/2808747/why-does-jpa-require-a-no-arg-constructor-for-domain-objects)
+
+그리고 생각해보면 지연 로딩(Lazy Loading)을 위해서 다른 Entity를 가져오기 위해서는 엔티티를 일단은 찾기전에 가져오긴해야 하므로, 기본 생성자를 통해 엔티티를 가져오는데,
+
+JPA에서는 대략 이런 방식으로 Entity를 가져오는 듯하다.
 
 ```java
-// Entity
+    public PojoInstantiator(
+            Class mappedClass,
+            ReflectionOptimizer.InstantiationOptimizer optimizer,
+            boolean embeddedIdentifier) {
+        this.mappedClass = mappedClass;
+        this.optimizer = optimizer;
+        this.embeddedIdentifier = embeddedIdentifier;
+        this.isAbstract = ReflectHelper.isAbstractClass( mappedClass );
+
+        try {
+            constructor = ReflectHelper.getDefaultConstructor(mappedClass);
+        }
+```
+
+위처럼  MappedClass에서 리플랙션핼퍼를 통해서 기본 생성자를 불러와서 생성자를 가져오게 되는데, 만약에 MappedClass가 기본 생성자가 없다면 아예 만들어지지 않고...
+
+```java
+else if ( constructor == null ) {
+			throw new InstantiationException( "No default constructor for entity: ", mappedClass );
+		}
+```
+
+`InstantiationException`를 던지게 된다.
+
+즉, 기본 생성자가 없으면 Proxy 방식으로 Entity를 기본으로 생성할 수 없다.
+
+물론, 문제는 JPA에서 기본 생성자를 만드는 이유는 반드시 Entity를 생성하기 위해서 기본 생성자를 가지고 있어야하는 것까지는 맞는 것 같은데,
+
+그것이 JPA Proxy 패턴을 사용하기 위해서 반드시 기본 생성자를 사용해야하는 건지에 대해서는 명확하게 말할 수 는 없을 것 같다.
+
+그냥 단순하게, Proxy 패턴에 리플렉션을 쓰고 그 리플렉션에서 생성자를 가져오는 조건 자체가 Default Constructor를 통해서 구현하는 것이니까 이게 Proxy 패턴을 사용했기 때문에,  기본 생성자를 쓰는 것이 프록시 패턴을 사용하는 건가라고 말할 수 있는건지 확답을 못내리겠음...
+
+[JPA Entity의 기본 생성자 관련 예외 정리하기](https://wbluke.tistory.com/6)
+
+## 7. Spring 코드에 프록시로 기존 코드 확장하기
+
+```java
+//Entity
 public class Fruit {
     private String name;
     private int price;
@@ -374,10 +475,10 @@ public class LogTrace {
             return traceId;
         }
     }
-}때
+}
 ```
 
-위와 같은 controller-service-repository 계층의 앱이 존재하고 각 계층의 log를 깊이별로 tracing하는 기능을 LogTrace객체를 통하여 추가하고자 할 때 일반적인 방법으로는 아래와 같이 추가할 수 있다.
+위와 같은 controller-service-repository 계층의 앱이 존재하고 각 계층의 log를 깊이별로 tracing하는 기능을 LogTrace객체를 통하여 추가하고자 할때 일반적인 방법으로는 아래와 같이 추가할 수 있다.
 
 ```java
 @Controller
@@ -464,7 +565,7 @@ Proxy를 시작으로 AOP까지 확장해가며 서비스를 확장시켜보자.
 
 <br>
 
-### 1. Concreate Proxy
+### 7-1. Concrete Proxy
 
 자식 클래스는 부모클래스로 업캐스팅이 가능하다는 점을 이용하여 상속을 통해서 프록시를 구현한 방법.
 
@@ -616,7 +717,7 @@ public class AppConfig {
 
 <br>
 
-### 2. Interface Proxy
+### 7-2. Interface Proxy
 
 프록시 패턴과 같이 인터페이스를 통하여 프록시 객체를 생성하는 방법으로 보통 컨트롤러는 인터페이스를 구현하지 않지만 예제를 위하여 컨트롤러도 인터페이스를 구현.
 
@@ -786,7 +887,7 @@ public class InterfaceProxyConfig {
 
 <br>
 
-### 3. DynamicProxy
+### 7-3. DynamicProxy
 
 Java에서 제공하는 기능으로 동적으로 프록시를 생성할 수 있는 방법이며, DynamicProxy는 인터페이스가 존재해야지만 프록시를 생성할 수 있다. `Proxy`의 `newInstance()`메서드를 통해서 프록시 객체를 정의할 필요없이 동적으로 프록시객체를 생성할 수 있다.
 
@@ -867,7 +968,7 @@ DynamicProxy를 구현하기 위해 InvocationHandler를 구현하여 사용하�
 
 #### 패턴 매칭
 
-위의 방법은 해당 클래스내부의 모든 메서드라면 logtrace기능이 수행되게 되는데 같은 클래스안에서 특정메서드에만 수행하게 하고 싶을 수 있을 것이다. 이때 메서드 이름을 `pattern`을 통해 제한하고자 할 때 아래와 같이 구현할 수도 있다.
+위의 방법은 해당 클래스내부의 모든 메서드라면 logtrace기능이 수행되게 되는데 같은 클래스안에서 특정메서드에만 수행하게 하고 싶을 수 있을 것이다. 이때 메서드 이름을 `pattern`을 통해 제한하고자 할때 아래와 같이 구현할 수도 있다.
 
 ```java
 public class LogTraceFilterHandler implements InvocationHandler {
@@ -948,11 +1049,11 @@ public class DynamicProxyFilterConfig {
 
 <br>
 
-### 4. ProxyFactory
+### 7-4. ProxyFactory
 
 여기서부터는 AOP를 이용한 방법이며 `CGLIB`를 이용한 방법이다.
 
-CGLIB를 통해 프록시를 생성하고자 할 때 `MethodInterceptor`를 구현한 클래스를 가지고 프록시를 생성할 수 있다.
+CGLIB를 통해 프록시를 생성하고자 할때 `MethodInterceptor`를 구현한 클래스를 가지고 프록시를 생성할 수 있다.
 
 CGLIB는 DynamicProxy와 다르게 인터페이스가 아닌 상속을 통해 프록시를 생성하는 방법이며 spring boot에서 AOP 기능을 제공하는데 default로 사용되는 방식이기 때문에 spring boot를 이용하고 있다면 별도의 라이브러리를 추가할 필요가 없다.
 
@@ -1041,7 +1142,7 @@ public class ProxyFactoryConfig {
 
 <br>
 
-### 5. postProcessor
+### 7-5. postProcessor
 
 Bean을 생성하고 컨테이너에 등록하기 전에 후처리기(PostProcessor)를 통해 특정 작업을 수행할 수 있다.(기능 추가, 제어 등)
 
@@ -1081,7 +1182,7 @@ public class PackageLogTracePostProcessor implements BeanPostProcessor {
     }
 }
 
-//빈을 생성하고 등록할 때 이용할 후처리기(postProcessor)등록
+//빈을 생성하고 등록할때 이용할 후처리기(postProcessor)등록
 @Slf4j
 @Configuration
 public class BeanPostProcessorConfig {
@@ -1106,7 +1207,7 @@ public class BeanPostProcessorConfig {
 
 하지만, 기능을 추가하고자하는 메서드를 필터링하는 구문이 setMappedNames()로 특정 클래스/클래스내의 특정 메서드는 제외와 같이 디테일한 경우는 필터링이 힘들다. 이를 해결하여 확장해보자.
 
-### 6. AutoProxy
+### 7-6. AutoProxy
 
 여기서부터는 pointcut을 표현식을 통해서 적용하는 패턴으로 `implementation 'org.springframework.boot:spring-boot-starter-aop'`를 추가해주어야 한다.
 
@@ -1159,7 +1260,7 @@ public class AutoProxyConfig {
 
 <br>
 
-### 7. AOP 어노테이션 (표현식으로 빈 등록)
+### 7-7. AOP 어노테이션 (표현식으로 빈 등록)
 
 지금까지는 `MethodInterceptor`의 구현체를 통한 Advise를 가지고 프록시를 수행했었다. 이는 내부적으로 MethodInvocation 인터페이스의 구현체(CglibMethodInvocation/Reflection...)를 가지고 메서드를 수행했다.
 
@@ -1203,7 +1304,7 @@ public class LogTraceAspect {
 
 <br>
 
-### 8. AOP 어노테이션 (custom annotation을 통한 등록)
+### 7-8. AOP 어노테이션 (custom annotation을 통한 등록)
 
 7의 경우도 보면 아직 불편하다! 패키지가 많아질 수록, 제외하는 메서드가 많아질 수록 표현식이 길고 복잡해지게 되어 관리가 힘들어진다.
 
@@ -1302,7 +1403,7 @@ public class AopConfig {
 
 <br>
 
-### 9. 주의사항
+### 7-9. 주의사항
 
 ```java
 @Controller
@@ -1371,7 +1472,7 @@ FastClass는 cglib에 있는 클래스로 MethodProxy가 생성될때 init메서
 
 상속을 통해서 프록시 객체를 생성하기 때문에 private은 상속하지 못한다 했는데 어떻게 private 메서드가 호출이 된 것일까?
 
-우리는 인터페이스나 클래스의 계층관계를 정의할 때 아래와같이 사용할 수 있다는 것을 알고 있다.
+우리는 인터페이스나 클래스의 계층관계를 정의할때 아래와같이 사용할 수 있다는 것을 알고 있다.
 
 ```java
 ExInterface ex = new ExInterfaceImpl();
@@ -1461,10 +1562,46 @@ Interceptor에 걸리지 못해 그대로 Enhancer의 프록시 객체로 로직
 
 이는 트랜잭션, AOP, Secruity,Async 에서도 발생할 수 있는 예외상황으로 알아두면 좋을 것 같다.
 
-<br><br><br>
+<br><br>
 
-### Reference
+## 8.추가 궁금증(다이나믹 리플렉션과 CGLib)
 
+다이나믹 리플렉션과 CGLibrary 프록시 방식은 뭐가 다른가?
+
+### 8-1. 다이나믹 리플렉션
+
+```java
+Object proxy = Proxy.newProxyInstance(
+   ClassLoader, 
+   Class<?>[],
+   InvocationHandler
+);
+```
+
+다이나믹 리플렉션은  Class를 받아서 처리하지만, Interface기반의 Proxy extend하지 않음.
+
+특정 Class가 interface를 없으면 Proxy 패턴을 구현할 수 없다.
+
+### 8-2. CGLibrary 리플렉션
+
+```java
+Enhancer enhancer = new Enhancer();
+enhancer.setSuperclass(Target.class); 
+enhancer.setCallback(MethodInterceptor);
+
+Object proxy = enchancer.create(); // proxy 생성
+```
+
+리플렉션은 Class를 받아서, Extends를 통해서 프록시 객체를 만듬.
+
+단점이 몇개 존재했지만.. 1. Enhancer라는 외부 라이브러리 참조해야한다는 점. 2. 디폴트 생성자가 무조건 있어야했음. 3. 생성자가 두번 호출됨.
+
+-> 스프링 버전업을 하면서 Enhancer는 Spring 프로젝트에 편입, 디폴트 생성자도 필요없어지고, 생성자 두번 호출되는 이슈도 해결되면서 Spring Boot에서는 기본 Proxy  생성 방식으로 차용함.
+
+**Reference**
+
+- [JDK Dynamic Proxy와 CGLIB의 차이점은 무엇일까? | Moon`s Development Blog](https://gmoon92.github.io/spring/aop/2019/04/20/jdk-dynamic-proxy-and-cglib.html)
+- [Spring AOP의 원리 - CGlib vs Dynamic Proxy — 천천히 올바르게](https://huisam.tistory.com/entry/springAOP)
 - [https://refactoring.guru/design-patterns/facade](https://refactoring.guru/design-patterns/facade)
 - [인프런 디자인 패턴 강의](https://www.inflearn.com/course/%EB%94%94%EC%9E%90%EC%9D%B8-%ED%8C%A8%ED%84%B4/dashboard)
 - [인프런 스프링 강의](https://www.inflearn.com/course/%EC%8A%A4%ED%94%84%EB%A7%81-%ED%95%B5%EC%8B%AC-%EC%9B%90%EB%A6%AC-%EA%B3%A0%EA%B8%89%ED%8E%B8/dashboard)
