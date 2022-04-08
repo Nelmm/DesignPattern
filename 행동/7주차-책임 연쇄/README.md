@@ -11,29 +11,30 @@
     * [4-3. 책임 연쇄 패턴](#4-3-책임-연쇄-패턴)
 
 
-# 책임 연쇄 패턴```java
+# 책임 연쇄 패턴
+
+```java
 @Getter
 @Setter
 public class IdeaRequest {
-private String planner;
-private String developer;
-private String tester;
-
+    private String planner;
+    private String developer;
+    private String tester;
 }
 
 public class DefaultWorkHandler {
-public void handle(IdeaRequest ideaRequest) {
-System.out.println("최재우1이 개발을 시작하다");
-ideaRequest.setDeveloper("최재우1");
-}
+    public void handle(IdeaRequest ideaRequest) {
+        System.out.println("최재우1이 개발을 시작하다");
+        ideaRequest.setDeveloper("최재우1");
+    }
 }
 
 public class Application {
-public static void main(String[] args) {
-IdeaRequest ideaRequest = new IdeaRequest();
-DefaultWorkHandler handler = new DefaultWorkHandler();
-handler.handle(ideaRequest);
-}
+    public static void main(String[] args) {
+        IdeaRequest ideaRequest = new IdeaRequest();
+        DefaultWorkHandler handler = new DefaultWorkHandler();
+        handler.handle(ideaRequest);
+    }
 }
 
 //결과
