@@ -1,6 +1,21 @@
-# 이터레이터 패턴 예제
+## 1. 이터레이터 패턴(Iterator Pattern)이란?
 
-예제 요구사항
+`이터레이터 패턴`은 **집합 객체 내부 구조를 노출시키지 않고** **순회하는 방법**을 제공하는 패턴
+
+[![https://user-images.githubusercontent.com/79291114/150241467-6dfb6efb-36bb-48e1-82d1-96dcc38fcd93.PNG](https://user-images.githubusercontent.com/79291114/150241467-6dfb6efb-36bb-48e1-82d1-96dcc38fcd93.PNG)](https://user-images.githubusercontent.com/79291114/150241467-6dfb6efb-36bb-48e1-82d1-96dcc38fcd93.PNG)
+
+- `Iterator` : 집합체의 요소들을 순서대로 검색하기 위한 인터페이스
+- `ConcreteIterator` : `Iterator` 인터페이스를 구현
+- `Aggregate` : 여러 요소들로 이루어져 있는 집합체
+- `ConcreteAggregate` : `Aggregate` 인터페이스를 구현
+
+
+
+
+
+## 2. 코드로 알아보는 이터레이터 패턴
+
+### 2-1. 요구사항
 
 - TOP 상품 영역에 채용 공고 리스트를 출력해야함
 - 채용 공고 마감 순으로 정렬 가능
@@ -255,6 +270,50 @@ public class Main {
 
 그 결과 `Main.client(CustomIterator<Recruit> iterator)` 에서 똑같은 순회 로직으로 처리가 가능해진다.
 
-이럼으로써 추후 `List → Set`, `Array → Map` 등 **자료구조가 변경되어도 클라이언트 코드는 변경되지 않고** `CustomIterator`**의 구현체만 변경하면 됩니다.**
+이럼으로써 추후 `List → Set`, `Array → Map` 등 **자료구조가 변경되어도 클라이언트 코드는 변경되지 않고** `CustomIterator`**의 구현체만 변경하면 된다.**
 
 즉 `OCP(Open/Closed Principle)`을 만족한다.
+
+
+
+
+
+## 3. Collection의 구조
+
+아래와 같이 `Collection`은 Iterable을 상속받기 때문에 **Collection 자료구조를 사용하면 Iterator를 사용**할 수 있다.
+
+하지만 **Collection을 상속받지 않는 Map은 자체적으로 Iterator를 사용할 수 없기 때문에 위의 예시와 같이 Map의 Key나 Value를 keySet() 이나 values()를 통해 Collection을 상속받는 Set이나 Collection을 반환 후 Iterator를 사용**할 수 있다.
+
+[![https://user-images.githubusercontent.com/58713853/73814627-f84d6400-4826-11ea-95dc-0de32bd8be6c.PNG](https://user-images.githubusercontent.com/58713853/73814627-f84d6400-4826-11ea-95dc-0de32bd8be6c.PNG)](https://user-images.githubusercontent.com/58713853/73814627-f84d6400-4826-11ea-95dc-0de32bd8be6c.PNG)
+
+[![https://user-images.githubusercontent.com/79291114/115977688-29918b80-a5b5-11eb-85b1-84c72a9c9be9.png](https://user-images.githubusercontent.com/79291114/115977688-29918b80-a5b5-11eb-85b1-84c72a9c9be9.png)](https://user-images.githubusercontent.com/79291114/115977688-29918b80-a5b5-11eb-85b1-84c72a9c9be9.png)
+
+
+
+
+
+## 4. 이터레이드 패턴의 장단점
+
+### 4-1. 장점
+
+- 집합 객체가 가지고 있는 객체들에 손쉽게 접근할 수 있다.
+  - Iterator가 제공하는 인터페이스만 알면되고, 집합 객체의 구조는 알 필요없다.
+- 일관된 인터페이스를 사용해 여러 형태의 집합 구조를 순회할 수 있다.
+  - **단일책임원칙 -** hasNext()와 getNext()만 호출해도 됨.
+  - **OCP -** 기존 코드의 큰 변경 없음 (상황에 따라 변경되기도 함)
+
+
+
+### 4-2. 단점
+
+- 클래스가 늘어나고 복잡도가 증가한다.
+  - 이터레이터를 만드는 것이 유용한 상황인지 판단할 필요가 있다.
+  - 다양한 방법으로 순회하는 방법이 필요하고 내부의 집합 구조가 객체가 변경될 가능성이 있다면, 내부 구조를 클라이언트 쪽에게 숨기는 방법으로 이터레이터 패턴을 적용하는 것이 좋은 방법이 될 수 있다.
+
+
+
+
+
+## 5. 마치며
+
+이터레이터 패턴은 집합체를 일관적이게 순회할 수 있다는 것이 매력적인 패턴이다. 사용자의 입장에서도 집합체를 굳이 알지 않아도 되기 때문에 더 편하게 사용할 수 있다. 라이브러리 같은 사용자와의 커플링을 낮출 때 사용하면 유용할 것 같다.
